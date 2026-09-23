@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>수학 공식 직접 유도 학습 앱 | 15개정 & 22개정 교육과정 전 공식 수록</title>
+  <meta name="description" content="대한민국 15개정, 22개정 교육과정에 맞춘 중1부터 고3까지의 모든 핵심 수학 공식을 직접 단계별로 유도하며 원리를 체득하는 인터랙티브 수학 학습 스튜디오">
+  <meta name="keywords" content="수학 공식 유도, 근의 공식, 피타고라스 정리, 15개정 교육과정, 22개정 교육과정, 중학수학, 고등수학, 대수, 미적분, 기하, 확률과 통계">
+
+  <!-- Google Fonts: Pretendard, Inter, Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- KaTeX (수식 렌더링) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Canvas Confetti (축하 효과) -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ========================================================================
+       헤더 영역
+       ======================================================================== -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <div class="brand-icon">
+          <i class="fa-solid fa-square-root-variable"></i>
+        </div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <h1 class="brand-title">수학 공식 직접 유도 스튜디오</h1>
+            <span class="brand-badge">15개정 · 22개정 전과정</span>
+          </div>
+          <p style="font-size: 0.78rem; color: var(--text-dim); margin-top: 2px;">
+            공식을 무작정 외우지 않고 논리적 전개로 직접 증명하는 자기주도 수식 유도 연구소
+          </p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btnResetAll" class="btn-action-header" title="모든 공식 미시작(회색) 상태로 초기화" aria-label="학습 진도 초기화">
+          <i class="fa-solid fa-rotate-left"></i>
+          <span>처음 상태로 초기화</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       통계 대시보드 배너 (초록색 / 주황색 / 회색 상태 통계)
+       ======================================================================== -->
+  <section class="stats-banner">
+    <div class="stats-card">
+      <div class="stats-header">
+        <div class="stats-title-group">
+          <h2><i class="fa-solid fa-chart-pie" style="color: #60a5fa;"></i> 나의 공식 유도 달성 현황</h2>
+          <p>성공한 공식은 초록색, 진행 중인 공식은 주황색, 건들지 않은 공식은 회색으로 자동 기록됩니다.</p>
+        </div>
+
+        <div class="stats-legend">
+          <div class="legend-item">
+            <span class="legend-dot dot-success"></span>
+            <span>유도 완료</span>
+            <span id="statSuccessCount" class="legend-count" style="color: #34d399;">0</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot dot-warning"></span>
+            <span>진행 중</span>
+            <span id="statWarningCount" class="legend-count" style="color: #fbbf24;">0</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot dot-untouched"></span>
+            <span>미시작</span>
+            <span id="statUntouchedCount" class="legend-count" style="color: #94a3b8;">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-track-wrapper">
+        <div class="progress-bar-multi">
+          <div id="barSuccess" class="bar-segment bar-success" style="width: 0%;" title="유도 완료"></div>
+          <div id="barWarning" class="bar-segment bar-warning" style="width: 0%;" title="진행 중"></div>
+          <div id="barUntouched" class="bar-segment bar-untouched" style="width: 100%;" title="미시작"></div>
+        </div>
+        <div class="progress-labels">
+          <span id="progressSummaryText">총 0개 공식 중 0개 완료 (0%)</span>
+          <span id="progressWarningText">0개 진행 중</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       컨트롤 바 (15/22개정 교육과정 선택, 학년 필터, 상태 필터, 검색)
+       ======================================================================== -->
+  <section class="controls-section">
+    <!-- 교육과정 및 검색 -->
+    <div class="filter-bar-primary">
+      <div class="curriculum-tabs" role="tablist">
+        <button class="tab-btn active" data-curriculum="all" role="tab" id="tabCurriculumAll">
+          <i class="fa-solid fa-layer-group"></i> 전체 교육과정
+        </button>
+        <button class="tab-btn" data-curriculum="22개정" role="tab" id="tabCurriculum22">
+          <i class="fa-solid fa-sparkles"></i> 2022 개정
+        </button>
+        <button class="tab-btn" data-curriculum="15개정" role="tab" id="tabCurriculum15">
+          <i class="fa-solid fa-book-bookmark"></i> 2015 개정
+        </button>
+      </div>
+
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="searchInput" class="search-input" placeholder="공식명, 단원, 개념 검색 (예: 근의 공식, 피타고라스, 미분, 타원)">
+      </div>
+    </div>
+
+    <!-- 학년/과목별 칩 & 상태별 필터 -->
+    <div class="filter-bar-secondary">
+      <div class="chips-scroll" id="gradeChipsContainer">
+        <button class="chip-btn active" data-grade="all">전체 학년</button>
+        <button class="chip-btn" data-grade="중1">중1</button>
+        <button class="chip-btn" data-grade="중2">중2</button>
+        <button class="chip-btn" data-grade="중3">중3</button>
+        <button class="chip-btn" data-grade="고1">고1 (공통수학1·2)</button>
+        <button class="chip-btn" data-grade="고2">고2 (대수 / 수I·수II)</button>
+        <button class="chip-btn" data-grade="고3">고3 (미적분 / 확통 / 기하)</button>
+      </div>
+
+      <!-- 상태별 필터 버튼 (핵심 요구사항 #3: 초록/주황/회색 필터링) -->
+      <div class="status-filter-group" id="statusFilterGroup">
+        <button class="status-pill active pill-all" data-status="all" title="모든 상태 보기">
+          전체
+        </button>
+        <button class="status-pill pill-success" data-status="completed" title="성공한 공식만 보기">
+          <span class="legend-dot dot-success"></span> 완료 (<span id="filterSuccessCount">0</span>)
+        </button>
+        <button class="status-pill pill-warning" data-status="in_progress" title="유도하다가 만 공식 보기">
+          <span class="legend-dot dot-warning"></span> 진행 중 (<span id="filterWarningCount">0</span>)
+        </button>
+        <button class="status-pill pill-untouched" data-status="untouched" title="건들지도 않은 공식 보기">
+          <span class="legend-dot dot-untouched"></span> 미시작 (<span id="filterUntouchedCount">0</span>)
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       공식 카드 그리드 영역 (동적 렌더링)
+       ======================================================================== -->
+  <main class="formulas-grid-section">
+    <div id="formulasGrid" class="cards-grid">
+      <!-- JavaScript에서 공식 카드들이 실시간으로 렌더링됩니다 -->
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       유도 집중형 스튜디오 모달 (AI 튜터 없이 넓고 쾌적한 1단 집중 캔버스)
+       ======================================================================== -->
+  <div id="studioModal" class="studio-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="studio-container focused-studio">
+      
+      <!-- 스튜디오 헤더 -->
+      <header class="studio-header">
+        <div class="studio-header-left">
+          <div class="brand-icon" style="width: 38px; height: 38px; font-size: 1.1rem;">
+            <i class="fa-solid fa-compass-drafting"></i>
+          </div>
+          <div class="studio-title-box">
+            <h3 id="studioFormulaTitle">공식 제목</h3>
+            <div class="studio-target-formula">
+              <span>목표 수식:</span>
+              <span id="studioFormulaLatex"></span>
+              <span id="studioMetaBadges" style="margin-left: 0.5rem;"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="studio-header-right">
+          <button id="btnRestartFormula" class="btn-icon" title="1단계부터 다시 유도하기" aria-label="처음부터 유도">
+            <i class="fa-solid fa-arrow-rotate-right"></i>
+          </button>
+          <button id="btnCloseStudio" class="btn-icon" title="닫기 (진행 상태 자동 저장)" aria-label="스튜디오 닫기">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- 스튜디오 본체: 집중형 단일 유도 캔버스 -->
+      <div class="studio-body focused-body">
+        
+        <section class="studio-derivation-pane focused-pane">
+          
+          <!-- 단계 진행 네비게이션 칩스 -->
+          <div class="step-stepper-bar" id="stepStepperBar">
+            <!-- JavaScript에서 단계 칩이 동적으로 생성됩니다 -->
+          </div>
+
+          <!-- 현재 유도 단계 카드 -->
+          <div id="activeStepCard" class="active-step-card">
+            <div class="step-headline">
+              <span id="stepHeadlineTag" class="step-headline-tag">STEP 1</span>
+              <span id="stepProgressRatio" style="font-size: 0.82rem; color: var(--text-dim); font-family: monospace;">1 / 3</span>
+            </div>
+
+            <div id="stepGoalText" class="step-goal-text">
+              단계 목표 설명이 들어갑니다.
+            </div>
+
+            <!-- 현재 식과 목표 식의 변형 흐름 -->
+            <div class="formula-flow-box">
+              <div class="flow-node">
+                <div class="flow-label">출발 수식</div>
+                <div id="flowStartExpr" class="katex-node"></div>
+              </div>
+              <div class="flow-arrow">
+                <i class="fa-solid fa-arrow-right-long"></i>
+              </div>
+              <div class="flow-node">
+                <div class="flow-label">도달 목표 수식</div>
+                <div id="flowTargetExpr" class="katex-node"></div>
+              </div>
+            </div>
+
+            <!-- 챌린지 문제 & 선택지 -->
+            <div class="challenge-box">
+              <div id="challengeQuestion" class="challenge-question">
+                다음 중 이 단계에서 취해야 할 올바른 식 변형은 무엇일까요?
+              </div>
+
+              <div id="optionsList" class="options-list">
+                <!-- JavaScript에서 선택지들이 동적으로 삽입됩니다 -->
+              </div>
+            </div>
+
+            <!-- 정답 / 오답 피드백 알림창 -->
+            <div id="feedbackAlert" class="feedback-alert"></div>
+
+            <!-- 단계별 유도 힌트 및 핵심 원리 아코디언 (자체 힌트) -->
+            <div class="hint-accordion" id="hintAccordion">
+              <button type="button" class="btn-toggle-hint" id="btnToggleHint">
+                <span><i class="fa-solid fa-lightbulb" style="color: #fbbf24;"></i> 유도 과정이 막혔나요? 단계별 힌트 보기</span>
+                <i class="fa-solid fa-chevron-down hint-arrow" id="hintArrow"></i>
+              </button>
+              <div class="hint-content" id="hintContent">
+                <div class="hint-box">
+                  <p><strong>💡 핵심 힌트:</strong> <span id="hintText"></span></p>
+                  <p style="margin-top: 6px;"><strong>❓ 식 변형의 이유:</strong> <span id="whyText"></span></p>
+                  <p style="margin-top: 6px; color: #fca5a5;"><strong>⚠️ 흔히 하는 실수:</strong> <span id="mistakeText"></span></p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 유도 완료 축하 뷰 (모든 단계를 성공했을 때 표시) -->
+          <div id="celebrationView" class="celebration-view">
+            <div class="celebration-badge-icon">
+              <i class="fa-solid fa-award"></i>
+            </div>
+            <h4 class="celebration-title">🎉 유도 성공! 공식을 완벽히 정복했습니다!</h4>
+            <p id="celebrationFormulaDesc" class="celebration-desc">
+              축하합니다! 이 공식의 모든 단계별 논리 전개를 스스로 완성했습니다. 공식의 상태가 <strong>초록색(완료)</strong>으로 저장되었습니다!
+            </p>
+            <div style="display: flex; gap: 0.8rem; margin-top: 0.5rem; flex-wrap: wrap; justify-content: center;">
+              <button id="btnReviewFormula" class="btn-secondary">
+                <i class="fa-solid fa-eye"></i> 전개 과정 복습하기
+              </button>
+              <button id="btnCompleteClose" class="btn-primary">
+                <i class="fa-solid fa-check"></i> 다른 공식 도전하기
+              </button>
+            </div>
+          </div>
+
+          <!-- 하단 액션 버튼 바 -->
+          <div class="studio-action-bar">
+            <button id="btnPrevStep" class="btn-secondary" disabled>
+              <i class="fa-solid fa-chevron-left"></i> 이전 단계
+            </button>
+            <button id="btnCheckOrNext" class="btn-primary" disabled>
+              <span>선택지 확인</span> <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/mathData.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
