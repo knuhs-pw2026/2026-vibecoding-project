@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VocaMind AI | 개인 맞춤형 AI 영어 단어 학습 솔루션</title>
+  <meta name="description" content="에빙하우스 망각곡선 기반 맞춤형 문제 추천과 심층 AI 오답 원인 분석을 제공하는 스마트 영단어 암기 웹앱">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="bg-ambient-mesh"></div>
+
+  <div class="app-container">
+    <!-- Main Header -->
+    <header class="main-header">
+      <div class="brand-area">
+        <div class="brand-logo-icon">🧠</div>
+        <div>
+          <div style="display: flex; align-items: center;">
+            <span class="brand-name">VocaMind AI</span>
+            <span class="brand-badge">Adaptive SRS</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Navigation Tabs -->
+      <nav class="nav-tabs" aria-label="주요 메뉴">
+        <button class="nav-tab-btn active" data-tab="dashboard" id="nav-btn-dashboard">
+          <span>🏠</span> 대시보드
+        </button>
+        <button class="nav-tab-btn" data-tab="quiz" id="nav-btn-quiz">
+          <span>📝</span> 맞춤 퀴즈
+        </button>
+        <button class="nav-tab-btn" data-tab="clinic" id="nav-btn-clinic">
+          <span>🔍</span> AI 오답 클리닉
+        </button>
+        <button class="nav-tab-btn" data-tab="vault" id="nav-btn-vault">
+          <span>📚</span> 단어 보관함
+        </button>
+      </nav>
+
+      <!-- User Stats & Actions -->
+      <div class="header-stats">
+        <div class="stat-pill streak" title="연속 정답 스트릭">
+          <span class="icon">🔥</span>
+          <span class="val" id="header-streak-val">0</span>
+        </div>
+        <div class="stat-pill xp" title="누적 경험치">
+          <span class="icon">⭐</span>
+          <span class="val" id="header-xp-val">0 XP</span>
+        </div>
+        <button class="header-action-btn" id="btn-toggle-sound" title="효과음 켜기/끄기">
+          <span id="sound-icon">🔊</span>
+        </button>
+        <button class="header-action-btn" id="btn-open-settings" title="설정">
+          <span>⚙️</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main>
+      <!-- ================= 1. 대시보드 탭 ================= -->
+      <section id="tab-dashboard" class="tab-content-panel active">
+        <div class="dashboard-grid">
+          <!-- Left Column -->
+          <div class="dashboard-main-col">
+            <!-- Hero AI Recommendation Banner -->
+            <div class="hero-recommend-card">
+              <div class="hero-tag">🎯 AI Smart Recommendation</div>
+              <h1 class="hero-title">당신의 뇌에 꼭 맞춘 최적의 단어 큐</h1>
+              <p class="hero-subtitle">
+                망각 곡선과 누적 오답 패턴을 분석하여 지금 복습하지 않으면 잊어버릴 골든타임 단어들을 정밀 선별했습니다.
+              </p>
+
+              <!-- Recommendation Modes -->
+              <div class="recommend-modes" id="recommend-mode-group">
+                <button class="mode-pill-btn active" data-mode="smart">
+                  <span>⚡</span> 스마트 밸런스
+                </button>
+                <button class="mode-pill-btn" data-mode="weakness">
+                  <span>🎯</span> 취약점 집중 공략
+                </button>
+                <button class="mode-pill-btn" data-mode="srs">
+                  <span>🧠</span> 망각 방지 복습
+                </button>
+                <button class="mode-pill-btn" data-mode="challenge">
+                  <span>🚀</span> 레벨업 챌린지
+                </button>
+              </div>
+
+              <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <button class="btn-primary-launch" id="btn-start-recommended-quiz">
+                  <span>문제 풀기 시작 (10문항)</span>
+                  <span>➔</span>
+                </button>
+                <div style="color: var(--text-muted); font-size: 0.88rem;">
+                  카테고리: 
+                  <select id="select-category-filter" style="background: rgba(0,0,0,0.4); color:#fff; border:1px solid var(--border-subtle); padding: 4px 8px; border-radius: 6px; outline:none;">
+                    <option value="ALL">전체 분야 통합</option>
+                    <option value="CSAT">수능 필수</option>
+                    <option value="TOEIC">토익 실전</option>
+                    <option value="BUSINESS">비즈니스</option>
+                    <option value="ADVANCED">고급/토플</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stats Metrics Row -->
+            <div class="stats-card-row">
+              <div class="stat-metric-card">
+                <div class="metric-header">
+                  <span>전체 정답률</span>
+                  <span>🎯</span>
+                </div>
+                <div class="metric-val" id="metric-accuracy">0%</div>
+                <div class="metric-sub" id="metric-accuracy-sub">총 0문제 풀이 완료</div>
+              </div>
+
+              <div class="stat-metric-card">
+                <div class="metric-header">
+                  <span>완전 암기 단어</span>
+                  <span>💎</span>
+                </div>
+                <div class="metric-val" id="metric-mastered">0</div>
+                <div class="metric-sub">장기 기억 정착 완료</div>
+              </div>
+
+              <div class="stat-metric-card">
+                <div class="metric-header">
+                  <span>집중 관리 오답</span>
+                  <span>🚨</span>
+                </div>
+                <div class="metric-val" style="color: #f87171;" id="metric-weak">0</div>
+                <div class="metric-sub">재도전이 필요한 어휘</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column / Side Panel -->
+          <aside class="side-widget-panel">
+            <!-- SRS Retention Gauge Widget -->
+            <div class="widget-card">
+              <h3 class="widget-title"><span>🧠</span> 에빙하우스 기억 유지율</h3>
+              <div class="retention-box">
+                <div class="progress-circle-wrap">
+                  <svg width="90" height="90" viewBox="0 0 100 100">
+                    <defs>
+                      <linearGradient id="cyanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#6366f1" />
+                        <stop offset="100%" stop-color="#00f2fe" />
+                      </linearGradient>
+                    </defs>
+                    <circle class="circle-bg" cx="50" cy="50" r="42"></circle>
+                    <circle class="circle-fill" id="retention-circle-fill" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="0"></circle>
+                  </svg>
+                  <div class="circle-text" id="retention-percent-text">100%</div>
+                </div>
+                <div class="retention-text">
+                  <h4 id="retention-status-label">기억 최적 상태</h4>
+                  <p id="retention-status-desc">학습 주기에 맞춰 복습하면 영구 기억으로 전환됩니다.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Recent Mistakes Preview -->
+            <div class="widget-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 class="widget-title" style="margin-bottom:0;"><span>⚠️</span> 최근 오답 단어</h3>
+                <button class="btn-hint" id="btn-goto-clinic-link">클리닉 가기 →</button>
+              </div>
+              <div class="quick-mistake-list" id="quick-mistake-container">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ================= 2. 문제 풀기 (퀴즈 룸) 탭 ================= -->
+      <section id="tab-quiz" class="tab-content-panel">
+        <div class="quiz-wrapper">
+          <!-- Quiz Top Info Bar -->
+          <div class="quiz-top-bar">
+            <div class="quiz-progress-info">
+              <span>문제 <span id="quiz-curr-idx">1</span> / <span id="quiz-total-idx">10</span></span>
+            </div>
+            <div class="quiz-progress-bar-bg">
+              <div class="quiz-progress-bar-fill" id="quiz-progress-fill"></div>
+            </div>
+            <button class="btn-quit-quiz" id="btn-exit-quiz">중단하고 나가기</button>
+          </div>
+
+          <!-- Main Interactive Question Card -->
+          <div class="question-card" id="active-question-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="question-type-badge" id="q-type-badge">사지선다 뜻 맞히기</span>
+              <span id="q-category-badge" style="font-size: 0.78rem; color: var(--text-muted); font-weight:700;">수능 필수</span>
+            </div>
+
+            <!-- Question Prompt Area -->
+            <div class="question-prompt" id="q-prompt-container">
+              <!-- Injected by app.js (Word display or Cloze sentence) -->
+            </div>
+
+            <!-- Options Area (Choice Grid OR Spelling input) -->
+            <div id="q-interactive-area">
+              <!-- Injected by app.js -->
+            </div>
+
+            <!-- Hint Section -->
+            <div class="quiz-hint-toggle">
+              <button class="btn-hint" id="btn-toggle-hint">💡 힌트 보기</button>
+              <div class="hint-content-box" id="hint-box"></div>
+            </div>
+
+            <!-- Result Feedback Bottom Bar -->
+            <div class="quiz-feedback-bar" id="quiz-feedback-bar">
+              <div class="feedback-status" id="feedback-status-text">
+                <span id="feedback-icon">✅</span>
+                <span id="feedback-msg">정답입니다! 완벽해요.</span>
+              </div>
+              <div class="feedback-actions">
+                <button class="btn-open-autopsy" id="btn-trigger-autopsy" style="display: none;">
+                  <span>🔍 AI 오답 정밀 진단</span>
+                </button>
+                <button class="btn-next-question" id="btn-next-step">다음 문제 ➔</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 3. AI 오답 클리닉 탭 ================= -->
+      <section id="tab-clinic" class="tab-content-panel">
+        <div class="clinic-header-banner">
+          <div class="clinic-title-wrap">
+            <h2><span>🩺</span> AI 오답 정밀 진단실 & 오답노트</h2>
+            <p>틀린 단어의 근본적인 혼동 원인을 파헤치고, 어원과 연상 비법으로 뇌에 각인시킵니다.</p>
+          </div>
+          <button class="btn-retry-all-mistakes" id="btn-retry-clinic-mistakes">
+            <span>⚡ 오답 단어만 집중 재도전</span>
+          </button>
+        </div>
+
+        <div class="clinic-grid" id="clinic-words-container">
+          <!-- Injected dynamically by app.js -->
+        </div>
+      </section>
+
+      <!-- ================= 4. 단어 보관함 탭 ================= -->
+      <section id="tab-vault" class="tab-content-panel">
+        <div class="vault-header-row">
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="vault-search-input" placeholder="단어, 뜻, 발음 검색...">
+          </div>
+
+          <div class="vault-filter-group" id="vault-category-filters">
+            <button class="vault-filter-btn active" data-filter="ALL">전체</button>
+            <button class="vault-filter-btn" data-filter="CSAT">수능</button>
+            <button class="vault-filter-btn" data-filter="TOEIC">토익</button>
+            <button class="vault-filter-btn" data-filter="BUSINESS">비즈니스</button>
+            <button class="vault-filter-btn" data-filter="ADVANCED">고급</button>
+          </div>
+
+          <button class="btn-add-word" id="btn-open-add-word-modal">
+            <span>+</span> 나만의 단어 추가
+          </button>
+        </div>
+
+        <div class="vault-table-container">
+          <table class="vault-table">
+            <thead>
+              <tr>
+                <th>영단어</th>
+                <th>품사</th>
+                <th>주요 의미</th>
+                <th>예문</th>
+                <th>학습 상태</th>
+                <th style="text-align: right;">발음</th>
+              </tr>
+            </thead>
+            <tbody id="vault-table-body">
+              <!-- Injected by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- 1. AI 오답 정밀 진단 모달 (AI Autopsy Modal) -->
+  <div class="modal-overlay" id="modal-autopsy">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <span style="font-size: 1.5rem;">🔬</span>
+          <div>
+            <h3>AI 심층 오답 진단 보고서</h3>
+            <span style="font-size: 0.78rem; color: var(--accent-secondary);" id="autopsy-source-tag">VocaMind Neural Engine</span>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btn-close-autopsy">&times;</button>
+      </div>
+
+      <div class="modal-body" id="autopsy-modal-body">
+        <!-- Injected by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 환경설정 모달 (Settings Modal) -->
+  <div class="modal-overlay" id="modal-settings">
+    <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <span style="font-size: 1.5rem;">⚙️</span>
+          <h3>환경설정 & AI 엔진 연동</h3>
+        </div>
+        <button class="btn-close-modal" id="btn-close-settings">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="input-gemini-key">Google Gemini API Key (선택 사항)</label>
+          <input type="password" id="input-gemini-key" placeholder="AI Studio에서 발급받은 API 키 입력">
+          <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">
+            * 미입력 시 내장된 고성능 AI 규칙 엔진이 오답을 완벽하게 분석해 드립니다.
+          </small>
+        </div>
+
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+          <label style="font-size: 0.88rem; font-weight: 700; color: #f87171;">학습 데이터 초기화</label>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+            모든 학습 이력, 오답 통계, 경험치를 초기 상태로 리셋합니다.
+          </p>
+          <button id="btn-reset-data" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--color-error); color: #f87171; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight:600;">
+            데이터 전체 리셋
+          </button>
+        </div>
+
+        <button id="btn-save-settings" class="btn-primary-launch" style="width: 100%; justify-content: center; margin-top: 1.5rem;">
+          저장 완료
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 사용자 단어 추가 모달 (Add Custom Word Modal) -->
+  <div class="modal-overlay" id="modal-add-word">
+    <div class="modal-container" style="max-width: 560px;">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <span style="font-size: 1.5rem;">➕</span>
+          <h3>나만의 단어 추가</h3>
+        </div>
+        <button class="btn-close-modal" id="btn-close-add-word">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <form id="form-add-word">
+          <div class="form-group">
+            <label for="new-word-text">영단어 *</label>
+            <input type="text" id="new-word-text" placeholder="예: articulate" required>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label for="new-word-pos">품사</label>
+              <select id="new-word-pos">
+                <option value="v.">동사 (v.)</option>
+                <option value="n.">명사 (n.)</option>
+                <option value="adj.">형용사 (adj.)</option>
+                <option value="adv.">부사 (adv.)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="new-word-category">카테고리</label>
+              <select id="new-word-category">
+                <option value="CSAT">수능 필수</option>
+                <option value="TOEIC">토익 실전</option>
+                <option value="BUSINESS">비즈니스</option>
+                <option value="ADVANCED">고급/토플</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="new-word-meaning">한국어 뜻 *</label>
+            <input type="text" id="new-word-meaning" placeholder="예: 또렷이 말하다, 생각을 분명히 표현하다" required>
+          </div>
+          <div class="form-group">
+            <label for="new-word-example">영어 예문</label>
+            <input type="text" id="new-word-example" placeholder="예: She struggled to articulate her feelings.">
+          </div>
+          <div class="form-group">
+            <label for="new-word-mnemonic">나만의 연상 비법 / 메모</label>
+            <input type="text" id="new-word-mnemonic" placeholder="예: 아티클(article)을 조리 있게 또렷이 말하다">
+          </div>
+
+          <button type="submit" class="btn-primary-launch" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
+            단어 등록하기
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/vocabulary.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/ai-engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
