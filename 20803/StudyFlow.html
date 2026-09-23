@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyFlow — 고등학생 수험생 맞춤 학습 관리 플래너</title>
+  <meta name="description" content="고등학생 수험생을 위한 과목별 투두리스트, 공부 통계 시각화, 시험일 카운트다운 올인원 웹앱" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* ============================================================
+       StudyFlow — Global Design System (Dark mode & Glassmorphism)
+       ============================================================ */
+    :root {
+      --bg-base:       #080c18;
+      --bg-surface:    #0d1225;
+      --bg-card:       rgba(255, 255, 255, 0.04);
+      --bg-card-hover: rgba(255, 255, 255, 0.07);
+      --border:        rgba(255, 255, 255, 0.08);
+      --border-active: rgba(255, 255, 255, 0.18);
+
+      --text-primary:  #f0f4ff;
+      --text-secondary:#8b95b0;
+      --text-muted:    #4a5270;
+
+      --accent:        #6c63ff;
+      --accent-glow:   rgba(108, 99, 255, 0.35);
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+
+      --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.45);
+      --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 20% -10%, rgba(108, 99, 255, 0.16) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 85% 105%, rgba(79, 195, 247, 0.12) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      background: rgba(8, 12, 24, 0.82);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      font-size: 1.5rem;
+    }
+
+    .logo-text {
+      font-size: 1.35rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #7c74ff, #4fc3f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .header-date {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .btn-icon:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-active);
+      color: var(--text-primary);
+      transform: translateY(-2px);
+    }
+
+    /* Main Container */
+    .app-main {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: var(--shadow-card);
+      transition: border-color var(--transition);
+    }
+
+    .card:hover {
+      border-color: var(--border-active);
+    }
+
+    .card-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Top Row Layout */
+    .top-row {
+      display: grid;
+      grid-template-columns: 1fr 180px 200px;
+      gap: 18px;
+    }
+
+    /* D-Day Card */
+    .dday-card {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dday-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      max-height: 160px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .dday-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: all var(--transition);
+    }
+
+    .dday-item:hover {
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .dday-item-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .dday-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .dday-date {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+    }
+
+    .dday-badge {
+      font-size: 0.95rem;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 999px;
+      min-width: 65px;
+      text-align: center;
+    }
+
+    .dday-badge.near {
+      background: rgba(255, 107, 107, 0.16);
+      color: #ff6b6b;
+      border: 1px solid rgba(255, 107, 107, 0.3);
+    }
+
+    .dday-badge.mid {
+      background: rgba(255, 213, 79, 0.16);
+      color: #ffd54f;
+      border: 1px solid rgba(255, 213, 79, 0.3);
+    }
+
+    .dday-badge.far {
+      background: rgba(108, 99, 255, 0.16);
+      color: #a89cff;
+      border: 1px solid rgba(108, 99, 255, 0.3);
+    }
+
+    .dday-badge.past {
+      background: rgba(105, 240, 174, 0.16);
+      color: #69f0ae;
+      border: 1px solid rgba(105, 240, 174, 0.3);
+    }
+
+    .dday-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+      transition: color var(--transition);
+    }
+
+    .dday-delete:hover {
+      color: #ff6b6b;
+    }
+
+    .dday-empty {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 28px 0;
+    }
+
+    .btn-add-small {
+      margin-top: 12px;
+      background: none;
+      border: 1px dashed var(--border-active);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 8px;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-family: inherit;
+    }
+
+    .btn-add-small:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+      border-color: var(--accent);
+    }
+
+    /* Streak Card */
+    .streak-card {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .streak-number {
+      font-size: 3.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ff8c42, #ff5252);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+
+    .streak-unit {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .streak-dots {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .streak-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      transition: all var(--transition);
+    }
+
+    .streak-dot.active {
+      background: linear-gradient(135deg, #ff8c42, #ff5252);
+      box-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
+    }
+
+    /* Donut Card */
+    .donut-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .donut-wrap {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      flex-shrink: 0;
+    }
+
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .donut-pct {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .donut-sub {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* Todo Section */
+    .todo-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .subject-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .subject-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 15px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-family: inherit;
+    }
+
+    .subject-tab .tab-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .subject-tab.active {
+      border-color: currentColor;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-primary);
+    }
+
+    .subject-tab:hover:not(.active) {
+      border-color: var(--border-active);
+      color: var(--text-primary);
+    }
+
+    .tab-count {
+      font-size: 0.72rem;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      padding: 1px 7px;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .btn-add-subject {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card);
+      border: 1px dashed var(--border-active);
+      border-radius: 50%;
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .btn-add-subject:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      transform: rotate(90deg);
+    }
+
+    .todo-input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .todo-input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      color: var(--text-primary);
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+      transition: all var(--transition);
+    }
+
+    .todo-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .todo-input:focus {
+      border-color: var(--accent);
+      background: rgba(108, 99, 255, 0.06);
+      box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
+    }
+
+    .btn-add-todo {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #6c63ff, #4fc3f7);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .btn-add-todo:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .todo-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: all var(--transition);
+      animation: slideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .todo-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--border-active);
+    }
+
+    .todo-item.completed {
+      opacity: 0.55;
+    }
+
+    .todo-item.completed .todo-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .todo-checkbox {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all var(--transition);
+      position: relative;
+    }
+
+    .todo-checkbox:hover {
+      transform: scale(1.12);
+    }
+
+    .todo-checkbox.checked::after {
+      content: '';
+      position: absolute;
+      width: 5px;
+      height: 9px;
+      border-right: 2px solid #0d1225;
+      border-bottom: 2px solid #0d1225;
+      transform: rotate(45deg) translate(-1px, -1px);
+    }
+
+    .todo-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+
+    .todo-text {
+      flex: 1;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .todo-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      opacity: 0;
+      transition: all var(--transition);
+    }
+
+    .todo-item:hover .todo-delete {
+      opacity: 1;
+    }
+
+    .todo-delete:hover {
+      color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.12);
+    }
+
+    .todo-empty {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 36px 0;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .todo-empty.visible {
+      display: flex;
+    }
+
+    /* Weekly Chart */
+    .chart-wrap {
+      height: 220px;
+      position: relative;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition);
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: #121727;
+      border: 1px solid var(--border-active);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      width: 380px;
+      max-width: 90vw;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+      transform: scale(0.95) translateY(10px);
+      transition: transform var(--transition);
+    }
+
+    .modal-overlay.open .modal {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .form-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .form-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      color: var(--text-primary);
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+      transition: all var(--transition);
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
+    }
+
+    .form-input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1) opacity(0.5);
+      cursor: pointer;
+    }
+
+    .color-picker {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .color-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: all var(--transition);
+    }
+
+    .color-dot:hover {
+      transform: scale(1.15);
+    }
+
+    .color-dot.selected {
+      border-color: #ffffff;
+      transform: scale(1.2);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      padding: 12px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-family: inherit;
+    }
+
+    .btn-cancel:hover {
+      border-color: var(--border-active);
+      color: var(--text-primary);
+    }
+
+    .btn-confirm {
+      flex: 1;
+      padding: 12px;
+      background: linear-gradient(135deg, #6c63ff, #4fc3f7);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-family: inherit;
+    }
+
+    .btn-confirm:hover {
+      opacity: 0.9;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(18, 23, 39, 0.96);
+      border: 1px solid var(--border-active);
+      border-radius: 999px;
+      padding: 12px 24px;
+      font-size: 0.88rem;
+      color: var(--text-primary);
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 300;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Responsive */
+    @media (max-width: 820px) {
+      .app-header { padding: 14px 18px; }
+      .app-main { padding: 18px 14px 40px; gap: 16px; }
+      .top-row { grid-template-columns: 1fr; }
+      .donut-card { flex-direction: row; justify-content: space-around; }
+      .donut-wrap { width: 110px; height: 110px; }
+      .card { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========== HEADER ========== -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-icon">📖</span>
+        <span class="logo-text">StudyFlow</span>
+      </div>
+      <div class="header-date" id="headerDate"></div>
+    </div>
+    <div class="header-right">
+      <button class="btn-icon" id="btnAddExam" title="시험일 D-Day 추가">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </button>
+      <button class="btn-icon" id="btnNotification" title="모닝 리마인더 알림 설정">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========== MAIN ========== -->
+  <main class="app-main">
+
+    <!-- TOP ROW: D-Day + Streak + Donut -->
+    <div class="top-row">
+
+      <!-- D-Day Card -->
+      <div class="card dday-card">
+        <div class="card-label">📅 시험 카운트다운</div>
+        <div class="dday-list" id="ddayList">
+          <!-- JS 렌더링 -->
+        </div>
+        <button class="btn-add-small" id="btnAddExamInline">+ 시험일 추가</button>
+      </div>
+
+      <!-- Streak Card -->
+      <div class="card streak-card">
+        <div class="card-label">🔥 연속 완주</div>
+        <div class="streak-number" id="streakNumber">0</div>
+        <div class="streak-unit">일 연속 완료</div>
+        <div class="streak-dots" id="streakDots"></div>
+      </div>
+
+      <!-- Donut Chart Card -->
+      <div class="card donut-card">
+        <div class="card-label">✅ 오늘 완료율</div>
+        <div class="donut-wrap">
+          <canvas id="donutChart" width="140" height="140"></canvas>
+          <div class="donut-center">
+            <span class="donut-pct" id="donutPct">0%</span>
+            <span class="donut-sub" id="donutSub">0 / 0</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SUBJECT TABS + TODO LIST -->
+    <div class="card todo-card">
+      <div class="todo-header">
+        <div class="subject-tabs" id="subjectTabs">
+          <!-- JS 렌더링 -->
+        </div>
+        <button class="btn-add-subject" id="btnAddSubject" title="과목 추가">+</button>
+      </div>
+      <div class="todo-input-row">
+        <input type="text" class="todo-input" id="todoInput" placeholder="오늘 할 공부를 입력하세요 (예: 수능특강 2강 풀기)" maxlength="70" />
+        <button class="btn-add-todo" id="btnAddTodo">추가</button>
+      </div>
+      <ul class="todo-list" id="todoList">
+        <!-- JS 렌더링 -->
+      </ul>
+      <div class="todo-empty" id="todoEmpty">
+        <span>아직 등록된 공부 계획이 없어요 🌿</span>
+        <span>위 입력창에서 오늘의 첫 할 일을 추가해보세요!</span>
+      </div>
+    </div>
+
+    <!-- WEEKLY CHART -->
+    <div class="card chart-card">
+      <div class="card-label">📊 주간 과목별 완료 통계</div>
+      <div class="chart-wrap">
+        <canvas id="weeklyChart"></canvas>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========== MODALS ========== -->
+
+  <!-- Add Exam Modal -->
+  <div class="modal-overlay" id="examModal">
+    <div class="modal">
+      <div class="modal-title">📅 시험일 추가</div>
+      <div class="modal-body">
+        <label class="form-label">시험 이름</label>
+        <input type="text" class="form-input" id="examName" placeholder="예: 2027학년도 수능, 2학기 중간고사" maxlength="24" />
+        <label class="form-label">시험 날짜</label>
+        <input type="date" class="form-input" id="examDate" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="examCancel">취소</button>
+        <button class="btn-confirm" id="examConfirm">추가</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Subject Modal -->
+  <div class="modal-overlay" id="subjectModal">
+    <div class="modal">
+      <div class="modal-title">📚 새 과목 추가</div>
+      <div class="modal-body">
+        <label class="form-label">과목명</label>
+        <input type="text" class="form-input" id="subjectName" placeholder="예: 한국사, 물리학, 지구과학" maxlength="12" />
+        <label class="form-label">테마 색상 선택</label>
+        <div class="color-picker" id="colorPicker">
+          <div class="color-dot selected" data-color="#ff6b6b" style="background:#ff6b6b"></div>
+          <div class="color-dot" data-color="#4fc3f7" style="background:#4fc3f7"></div>
+          <div class="color-dot" data-color="#69f0ae" style="background:#69f0ae"></div>
+          <div class="color-dot" data-color="#ffd54f" style="background:#ffd54f"></div>
+          <div class="color-dot" data-color="#ce93d8" style="background:#ce93d8"></div>
+          <div class="color-dot" data-color="#ff8a65" style="background:#ff8a65"></div>
+          <div class="color-dot" data-color="#80cbc4" style="background:#80cbc4"></div>
+          <div class="color-dot" data-color="#f48fb1" style="background:#f48fb1"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="subjectCancel">취소</button>
+        <button class="btn-confirm" id="subjectConfirm">추가</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ========== SCRIPT ========== -->
+  <script>
+    // ── State Management ──────────────────────────────────────────
+    const DEFAULT_SUBJECTS = [
+      { id: 'korean',  name: '국어', color: '#ff6b6b' },
+      { id: 'math',    name: '수학', color: '#4fc3f7' },
+      { id: 'english', name: '영어', color: '#69f0ae' },
+      { id: 'explore', name: '탐구', color: '#ffd54f' },
+    ];
+
+    let state = {
+      subjects: [],
+      activeSubject: null,
+      todos: [],       // { id, subjectId, text, done, date }
+      exams: [],       // { id, name, date }
+      streak: 0,
+      streakDates: [],
+    };
+
+    const today = () => new Date().toISOString().slice(0, 10);
+    const uid   = () => Math.random().toString(36).slice(2, 9);
+
+    function save() {
+      localStorage.setItem('studyflow_standalone_v1', JSON.stringify(state));
+    }
+
+    function load() {
+      const raw = localStorage.getItem('studyflow_standalone_v1') || localStorage.getItem('studyflow_v2');
+      if (raw) {
+        try { Object.assign(state, JSON.parse(raw)); } catch {}
+      } else {
+        state.subjects = [...DEFAULT_SUBJECTS];
+        state.activeSubject = DEFAULT_SUBJECTS[0].id;
+        // 샘플 데이터
+        state.exams = [
+          { id: uid(), name: '2학기 중간고사', date: getFutureDate(24) },
+          { id: uid(), name: '대학수학능력시험', date: getFutureDate(55) }
+        ];
+        state.todos = [
+          { id: uid(), subjectId: 'math', text: '수능완성 3단원 미적분 고난도 문항 풀이', done: false, date: today() },
+          { id: uid(), subjectId: 'english', text: '수능특강 단어 Day 12~14 암기 및 테스트', done: true, date: today() },
+          { id: uid(), subjectId: 'korean', text: '독서 제재별 기출 2개 지문 구조도 분석', done: false, date: today() }
+        ];
+      }
+      if (!state.subjects || state.subjects.length === 0) {
+        state.subjects = [...DEFAULT_SUBJECTS];
+      }
+      if (!state.activeSubject) state.activeSubject = state.subjects[0]?.id;
+      if (!state.exams) state.exams = [];
+      if (!state.streakDates) state.streakDates = [];
+    }
+
+    function getFutureDate(daysAhead) {
+      const d = new Date();
+      d.setDate(d.getDate() + daysAhead);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function getSubject(id) {
+      return state.subjects.find(s => s.id === id);
+    }
+
+    function todayTodos() {
+      return state.todos.filter(t => t.date === today());
+    }
+
+    // ── Header Date ───────────────────────────────────────────────
+    function renderHeader() {
+      const el = document.getElementById('headerDate');
+      const d = new Date();
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      el.textContent = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+    }
+
+    // ── D-Day Countdown ───────────────────────────────────────────
+    function renderDday() {
+      const list = document.getElementById('ddayList');
+      if (state.exams.length === 0) {
+        list.innerHTML = '<div class="dday-empty">등록된 시험 일정이 없어요</div>';
+        return;
+      }
+
+      const todayMs = new Date(today()).getTime();
+      list.innerHTML = state.exams
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .map(exam => {
+          const diff = Math.ceil((new Date(exam.date).getTime() - todayMs) / 86400000);
+          let label, cls;
+          if (diff < 0)        { label = '종료';      cls = 'past'; }
+          else if (diff === 0) { label = 'D-Day';     cls = 'near'; }
+          else if (diff <= 30) { label = `D-${diff}`; cls = 'near'; }
+          else if (diff <= 90) { label = `D-${diff}`; cls = 'mid';  }
+          else                 { label = `D-${diff}`; cls = 'far';  }
+
+          const dateStr = exam.date.replace(/-/g, '.').slice(2);
+          return `<div class="dday-item">
+            <div class="dday-item-left">
+              <span class="dday-name">${escapeHtml(exam.name)}</span>
+              <span class="dday-date">${dateStr}</span>
+            </div>
+            <div style="display:flex;align-items:center;">
+              <span class="dday-badge ${cls}">${label}</span>
+              <button class="dday-delete" onclick="deleteExam('${exam.id}')" title="삭제">✕</button>
+            </div>
+          </div>`;
+        }).join('');
+    }
+
+    function deleteExam(id) {
+      state.exams = state.exams.filter(e => e.id !== id);
+      save();
+      renderDday();
+      showToast('시험 일정이 삭제되었습니다');
+    }
+
+    // ── Streak Tracking ───────────────────────────────────────────
+    function calcStreak() {
+      const todayStr = today();
+      const byDate = {};
+      state.todos.forEach(t => {
+        if (!byDate[t.date]) byDate[t.date] = { total: 0, done: 0 };
+        byDate[t.date].total++;
+        if (t.done) byDate[t.date].done++;
+      });
+
+      let streak = 0;
+      const d = new Date();
+      while (true) {
+        const s = d.toISOString().slice(0, 10);
+        const info = byDate[s];
+        if (info && info.total > 0 && info.done === info.total) {
+          streak++;
+          d.setDate(d.getDate() - 1);
+        } else if (s === todayStr) {
+          d.setDate(d.getDate() - 1);
+          const s2 = d.toISOString().slice(0, 10);
+          const i2 = byDate[s2];
+          if (i2 && i2.total > 0 && i2.done === i2.total) {
+            streak++;
+            d.setDate(d.getDate() - 1);
+          } else break;
+        } else {
+          break;
+        }
+      }
+      return streak;
+    }
+
+    function renderStreak() {
+      const streak = calcStreak();
+      document.getElementById('streakNumber').textContent = streak;
+
+      const dots = document.getElementById('streakDots');
+      const byDate = {};
+      state.todos.forEach(t => {
+        if (!byDate[t.date]) byDate[t.date] = { total: 0, done: 0 };
+        byDate[t.date].total++;
+        if (t.done) byDate[t.date].done++;
+      });
+
+      let html = '';
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const s = d.toISOString().slice(0, 10);
+        const info = byDate[s];
+        const active = info && info.total > 0 && info.done === info.total;
+        html += `<div class="streak-dot ${active ? 'active' : ''}" title="${s}"></div>`;
+      }
+      dots.innerHTML = html;
+    }
+
+    // ── Donut Chart ───────────────────────────────────────────────
+    let donutChart = null;
+
+    function renderDonut() {
+      const todos = todayTodos();
+      const done = todos.filter(t => t.done).length;
+      const total = todos.length;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+
+      document.getElementById('donutPct').textContent = `${pct}%`;
+      document.getElementById('donutSub').textContent = `${done} / ${total} 완료`;
+
+      const ctx = document.getElementById('donutChart').getContext('2d');
+      const doneColor = pct === 100 ? '#69f0ae' : '#6c63ff';
+
+      if (donutChart) {
+        donutChart.data.datasets[0].data = total ? [done, total - done] : [0, 1];
+        donutChart.data.datasets[0].backgroundColor = [doneColor, 'rgba(255,255,255,0.06)'];
+        donutChart.update();
+      } else {
+        donutChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            datasets: [{
+              data: total ? [done, total - done] : [0, 1],
+              backgroundColor: [doneColor, 'rgba(255,255,255,0.06)'],
+              borderWidth: 0,
+              hoverOffset: 3,
+            }]
+          },
+          options: {
+            cutout: '72%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            animation: { animateRotate: true, duration: 600, easing: 'easeInOutQuart' },
+          }
+        });
+      }
+    }
+
+    // ── Weekly Bar Chart ──────────────────────────────────────────
+    let weeklyChart = null;
+
+    function renderWeekly() {
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      const labels = [];
+      const dateKeys = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        dateKeys.push(d.toISOString().slice(0, 10));
+        labels.push(`${days[d.getDay()]} (${d.getMonth() + 1}/${d.getDate()})`);
+      }
+
+      const datasets = state.subjects.map(sub => {
+        const data = dateKeys.map(dk => {
+          return state.todos.filter(t => t.subjectId === sub.id && t.date === dk && t.done).length;
+        });
+        return {
+          label: sub.name,
+          data,
+          backgroundColor: sub.color + 'bb',
+          borderColor: sub.color,
+          borderWidth: 1.5,
+          borderRadius: 6,
+          borderSkipped: false,
+        };
+      });
+
+      const ctx = document.getElementById('weeklyChart').getContext('2d');
+      if (weeklyChart) {
+        weeklyChart.data.labels = labels;
+        weeklyChart.data.datasets = datasets;
+        weeklyChart.update();
+      } else {
+        weeklyChart = new Chart(ctx, {
+          type: 'bar',
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                labels: {
+                  color: '#8b95b0',
+                  font: { size: 11, family: 'Pretendard, Inter' },
+                  boxWidth: 10,
+                  boxHeight: 10,
+                  borderRadius: 3,
+                }
+              },
+              tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+              x: {
+                ticks: { color: '#8b95b0', font: { size: 11 } },
+                grid: { color: 'rgba(255,255,255,0.04)' },
+              },
+              y: {
+                ticks: { color: '#8b95b0', font: { size: 11 }, precision: 0 },
+                grid: { color: 'rgba(255,255,255,0.06)' },
+              }
+            },
+            animation: { duration: 500 }
+          }
+        });
+      }
+    }
+
+    // ── Subject Tabs ──────────────────────────────────────────────
+    function renderSubjectTabs() {
+      const container = document.getElementById('subjectTabs');
+      const todos = state.todos.filter(t => t.date === today());
+
+      container.innerHTML = state.subjects.map(sub => {
+        const active = sub.id === state.activeSubject ? 'active' : '';
+        const count = todos.filter(t => t.subjectId === sub.id && !t.done).length;
+        return `<button class="subject-tab ${active}" data-id="${sub.id}"
+          style="${active ? `border-color:${sub.color}; color:${sub.color}` : ''}"
+          onclick="setActiveSubject('${sub.id}')">
+          <span class="tab-dot" style="background:${sub.color}"></span>
+          <span class="tab-label">${escapeHtml(sub.name)}</span>
+          ${count > 0 ? `<span class="tab-count">${count}</span>` : ''}
+        </button>`;
+      }).join('');
+    }
+
+    function setActiveSubject(id) {
+      state.activeSubject = id;
+      save();
+      renderSubjectTabs();
+      renderTodoList();
+    }
+
+    // ── Todo List ─────────────────────────────────────────────────
+    function renderTodoList() {
+      const list = document.getElementById('todoList');
+      const empty = document.getElementById('todoEmpty');
+      const sub = getSubject(state.activeSubject);
+      if (!sub) return;
+
+      const items = state.todos.filter(t => t.date === today() && t.subjectId === state.activeSubject);
+
+      if (items.length === 0) {
+        list.innerHTML = '';
+        empty.classList.add('visible');
+        return;
+      }
+      empty.classList.remove('visible');
+
+      list.innerHTML = items.map(todo => {
+        const doneClass = todo.done ? 'completed' : '';
+        const checkedClass = todo.done ? 'checked' : '';
+        return `<li class="todo-item ${doneClass}" id="todo-${todo.id}">
+          <div class="todo-checkbox ${checkedClass}"
+            style="border-color:${sub.color}; ${todo.done ? `background:${sub.color}` : ''}"
+            onclick="toggleTodo('${todo.id}')"></div>
+          <span class="todo-tag" style="background:${sub.color}22; color:${sub.color}">${escapeHtml(sub.name)}</span>
+          <span class="todo-text">${escapeHtml(todo.text)}</span>
+          <button class="todo-delete" onclick="deleteTodo('${todo.id}')">✕</button>
+        </li>`;
+      }).join('');
+    }
+
+    function addTodo() {
+      const input = document.getElementById('todoInput');
+      const text = input.value.trim();
+      if (!text) { input.focus(); return; }
+      if (!state.activeSubject) return;
+
+      const todo = { id: uid(), subjectId: state.activeSubject, text, done: false, date: today() };
+      state.todos.push(todo);
+      save();
+      input.value = '';
+      input.focus();
+      renderAll();
+      showToast('할 일이 추가되었습니다 ✍️');
+    }
+
+    function toggleTodo(id) {
+      const t = state.todos.find(t => t.id === id);
+      if (!t) return;
+      t.done = !t.done;
+      save();
+      renderAll();
+      if (t.done) confetti(id);
+    }
+
+    function deleteTodo(id) {
+      state.todos = state.todos.filter(t => t.id !== id);
+      save();
+      renderAll();
+      showToast('할 일이 삭제되었습니다');
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ── Mini Confetti ─────────────────────────────────────────────
+    function confetti(todoId) {
+      const el = document.getElementById(`todo-${todoId}`);
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const colors = ['#6c63ff', '#4fc3f7', '#69f0ae', '#ffd54f', '#ff6b6b'];
+      for (let i = 0; i < 14; i++) {
+        const dot = document.createElement('div');
+        dot.style.cssText = `
+          position: fixed; width: 6px; height: 6px; border-radius: 50%;
+          background: ${colors[i % colors.length]};
+          left: ${rect.left + rect.width / 2}px; top: ${rect.top + 10}px;
+          pointer-events: none; z-index: 9999;
+          animation: confettiFly 0.75s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+          --dx: ${(Math.random() - 0.5) * 120}px;
+          --dy: ${-(Math.random() * 70 + 30)}px;
+        `;
+        document.body.appendChild(dot);
+        setTimeout(() => dot.remove(), 850);
+      }
+    }
+
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+    @keyframes confettiFly {
+      0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+    }`;
+    document.head.appendChild(styleEl);
+
+    // ── Modals ────────────────────────────────────────────────────
+    function openExamModal() {
+      document.getElementById('examModal').classList.add('open');
+      document.getElementById('examName').value = '';
+      document.getElementById('examDate').value = '';
+      document.getElementById('examName').focus();
+    }
+    function closeExamModal() {
+      document.getElementById('examModal').classList.remove('open');
+    }
+    function confirmExam() {
+      const name = document.getElementById('examName').value.trim();
+      const date = document.getElementById('examDate').value;
+      if (!name || !date) { showToast('시험 이름과 날짜를 입력해주세요'); return; }
+      state.exams.push({ id: uid(), name, date });
+      save();
+      renderDday();
+      closeExamModal();
+      showToast(`"${name}" 시험일이 등록되었습니다 📅`);
+    }
+
+    let selectedColor = '#ff6b6b';
+    function openSubjectModal() {
+      document.getElementById('subjectModal').classList.add('open');
+      document.getElementById('subjectName').value = '';
+      selectedColor = '#ff6b6b';
+      document.querySelectorAll('.color-dot').forEach(d => {
+        d.classList.toggle('selected', d.dataset.color === selectedColor);
+      });
+      document.getElementById('subjectName').focus();
+    }
+    function closeSubjectModal() {
+      document.getElementById('subjectModal').classList.remove('open');
+    }
+    function confirmSubject() {
+      const name = document.getElementById('subjectName').value.trim();
+      if (!name) { showToast('과목명을 입력해주세요'); return; }
+      const id = uid();
+      state.subjects.push({ id, name, color: selectedColor });
+      state.activeSubject = id;
+      save();
+      closeSubjectModal();
+      renderAll();
+      showToast(`"${name}" 과목이 추가되었습니다 📚`);
+    }
+
+    // ── Toast ─────────────────────────────────────────────────────
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2300);
+    }
+
+    // ── Notification ──────────────────────────────────────────────
+    function requestNotification() {
+      if (!('Notification' in window)) {
+        showToast('이 브라우저는 알림을 지원하지 않습니다');
+        return;
+      }
+      if (Notification.permission === 'granted') {
+        new Notification('StudyFlow 📖', { body: '알림이 켜져 있습니다. 오늘도 파이팅!' });
+        showToast('알림이 정상 설정되어 있습니다 🔔');
+      } else {
+        Notification.requestPermission().then(perm => {
+          if (perm === 'granted') {
+            new Notification('StudyFlow 📖', { body: '매일 아침 공부 계획 알림을 보내드릴게요!' });
+            showToast('알림 권한이 허용되었습니다 🔔');
+          } else {
+            showToast('알림 권한이 허용되지 않았습니다');
+          }
+        });
+      }
+    }
+
+    // ── Render Master ─────────────────────────────────────────────
+    function renderAll() {
+      renderDday();
+      renderStreak();
+      renderDonut();
+      renderSubjectTabs();
+      renderTodoList();
+      renderWeekly();
+    }
+
+    // ── App Start ─────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      load();
+      renderHeader();
+      renderAll();
+
+      document.getElementById('btnAddExam').addEventListener('click', openExamModal);
+      document.getElementById('btnAddExamInline').addEventListener('click', openExamModal);
+      document.getElementById('btnNotification').addEventListener('click', requestNotification);
+
+      document.getElementById('btnAddSubject').addEventListener('click', openSubjectModal);
+
+      document.getElementById('btnAddTodo').addEventListener('click', addTodo);
+      document.getElementById('todoInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') addTodo();
+      });
+
+      document.getElementById('examCancel').addEventListener('click', closeExamModal);
+      document.getElementById('examConfirm').addEventListener('click', confirmExam);
+      document.getElementById('examModal').addEventListener('click', e => {
+        if (e.target === document.getElementById('examModal')) closeExamModal();
+      });
+
+      document.getElementById('subjectCancel').addEventListener('click', closeSubjectModal);
+      document.getElementById('subjectConfirm').addEventListener('click', confirmSubject);
+      document.getElementById('subjectModal').addEventListener('click', e => {
+        if (e.target === document.getElementById('subjectModal')) closeSubjectModal();
+      });
+
+      document.getElementById('colorPicker').addEventListener('click', e => {
+        const dot = e.target.closest('.color-dot');
+        if (!dot) return;
+        selectedColor = dot.dataset.color;
+        document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+        dot.classList.add('selected');
+      });
+
+      setInterval(renderHeader, 60000);
+    });
+  </script>
+</body>
+</html>
