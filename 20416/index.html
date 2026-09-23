@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Study SoundGuard | 스마트 공부방 적응형 백색소음기 & 소음 감쇄 최적 음량 제어기</title>
+  <meta name="description" content="실시간 마이크 주변 소음 데시벨 측정, 주파수(FFT) 분석 및 주변 소음 상승 시 자동으로 백색소음/클래식 음량을 부드럽게 조절해 소음을 상쇄하는 스마트 공부방 적응형 백색소음기">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Ambient Glow Light Effects -->
+  <div class="ambient-glow ambient-glow-1"></div>
+  <div class="ambient-glow ambient-glow-2"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Study SoundGuard <span class="badge-tag">Adaptive DSP</span></h1>
+          <p>스마트 공부방 적응형 소음 상쇄 및 최적 음량 제어기</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="status-pill" id="systemStatusPill">
+          <span class="status-dot"></span>
+          <span id="systemStatusText">대기 중 (Ready)</span>
+        </div>
+        <button id="masterStartBtn" class="btn-primary-action">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          <span id="masterStartText">시스템 시작</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Top Mode Switchers -->
+    <div class="top-mode-bar">
+      <!-- Headphone vs Speaker Mode -->
+      <div class="mode-card">
+        <div class="mode-info">
+          <div class="mode-icon">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 18v-6a9 9 0 0 1 18 0v6M3 18a3 3 0 0 0 3 3h1a3 3 0 0 0 3-3v-3a3 3 0 0 0-3-3H3m18 0h-1a3 3 0 0 0-3 3v3a3 3 0 0 0 3 3h1a3 3 0 0 0 3-3v-3z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="mode-label" id="audioDeviceModeLabel">이어폰 / 헤드폰 모드</div>
+            <div class="mode-sub" id="audioDeviceModeSub">출력음 마이크 피드백 없음</div>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="headphoneModeToggle" checked>
+          <span class="slider-switch"></span>
+        </label>
+      </div>
+
+      <!-- Frequency-Adaptive Masking Mode -->
+      <div class="mode-card">
+        <div class="mode-info">
+          <div class="mode-icon">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+            </svg>
+          </div>
+          <div>
+            <div class="mode-label">주파수 맞춤 마스킹</div>
+            <div class="mode-sub">고음(펜/말소리)·저음(발소리) 가중치</div>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="freqAdaptiveToggle" checked>
+          <span class="slider-switch"></span>
+        </label>
+      </div>
+
+      <!-- Adaptive Auto Volume On/Off -->
+      <div class="mode-card">
+        <div class="mode-info">
+          <div class="mode-icon">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="mode-label">적응형 자동 볼륨 제어</div>
+            <div class="mode-sub">소음 증가 시 볼륨 자동 승강</div>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="adaptiveAutoToggle" checked>
+          <span class="slider-switch"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-grid">
+      <!-- Left Column: Ambient Noise Measurement & FFT Analysis -->
+      <section class="glass-panel">
+        <!-- Prominent Focus Timer Hero (실시간 환경 소음 측정 위에 크게 배치된 집중 타이머) -->
+        <div class="focus-timer-hero">
+          <div class="timer-hero-header">
+            <div class="timer-hero-badge">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>집중 몰입 타이머 (Focus Pomodoro)</span>
+            </div>
+            <div class="timer-status-tag" id="timerStatusTag">집중 준비</div>
+          </div>
+
+          <div class="timer-hero-body">
+            <div class="timer-hero-digits" id="timerDisplay">25:00</div>
+            <div class="timer-hero-actions">
+              <button class="btn-timer-hero primary" id="timerToggleBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" id="timerToggleIcon">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                <span id="timerBtnText">시작</span>
+              </button>
+              <button class="btn-timer-hero" id="timerResetBtn">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                리셋
+              </button>
+            </div>
+          </div>
+
+          <div class="timer-hero-presets">
+            <button class="btn-timer-chip active" id="timerPreset25Btn">25분 집중</button>
+            <button class="btn-timer-chip" id="timerPreset50Btn">50분 몰입</button>
+            <button class="btn-timer-chip" id="timerPreset10Btn">10분 휴식</button>
+          </div>
+
+          <div class="timer-progress-track">
+            <div class="timer-progress-fill" id="timerProgressFill"></div>
+          </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/>
+            </svg>
+            실시간 환경 소음 측정
+          </h2>
+          <span class="panel-subtext">Web Audio API Analyser</span>
+        </div>
+
+        <!-- Decibel Circular Gauge -->
+        <div class="decibel-hero-container">
+          <div class="gauge-wrapper">
+            <svg class="gauge-svg" viewBox="0 0 240 240">
+              <defs>
+                <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#245F73" />
+                  <stop offset="40%" stop-color="#3E7E94" />
+                  <stop offset="75%" stop-color="#9E5632" />
+                  <stop offset="100%" stop-color="#733E24" />
+                </linearGradient>
+              </defs>
+              <circle class="gauge-bg-circle" cx="120" cy="120" r="100" />
+              <circle id="gaugeCircle" class="gauge-fill-circle" cx="120" cy="120" r="100" />
+            </svg>
+            <div class="gauge-center-content">
+              <div class="db-current-value" id="currentDbDisplay">35.0</div>
+              <div class="db-unit">dBA SPL</div>
+              <div class="db-environment-badge" id="dbEnvironmentBadge">조용한 환경 (Quiet)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Multi-Band Spectral Distribution (Low, Mid, High) -->
+        <div class="frequency-bands-row">
+          <div class="band-item band-low">
+            <div class="band-meta">
+              <span class="band-name">저음 (발소리·문)</span>
+              <span class="band-val" id="bandLowVal">0%</span>
+            </div>
+            <div class="band-progress-bar">
+              <div class="band-fill" id="bandLowFill"></div>
+            </div>
+          </div>
+
+          <div class="band-item band-mid">
+            <div class="band-meta">
+              <span class="band-name">중음 (말소리·웅성)</span>
+              <span class="band-val" id="bandMidVal">0%</span>
+            </div>
+            <div class="band-progress-bar">
+              <div class="band-fill" id="bandMidFill"></div>
+            </div>
+          </div>
+
+          <div class="band-item band-high">
+            <div class="band-meta">
+              <span class="band-name">고음 (펜딸깍·책장)</span>
+              <span class="band-val" id="bandHighVal">0%</span>
+            </div>
+            <div class="band-progress-bar">
+              <div class="band-fill" id="bandHighFill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Realtime FFT Spectrum Canvas -->
+        <div class="canvas-card" style="margin-top: 20px;">
+          <div class="panel-header" style="margin-bottom: 8px;">
+            <h3 class="panel-title" style="font-size: 0.9rem;">
+              실시간 FFT 주파수 스펙트럼 (20Hz - 20kHz)
+            </h3>
+          </div>
+          <div class="canvas-container">
+            <canvas id="spectrumCanvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Mic Calibration Offset Slider -->
+        <div class="control-group" style="margin-top: 16px;">
+          <div class="control-label-row">
+            <span class="control-label">마이크 감도 오프셋 (캘리브레이션)</span>
+            <span class="control-value" id="dbOffsetVal">+100 dB</span>
+          </div>
+          <input type="range" id="dbOffsetSlider" class="range-slider" min="70" max="120" value="100" step="1">
+          <div class="control-desc">기기 마이크 특성에 맞춰 데시벨 기준값을 미세 조정합니다.</div>
+        </div>
+      </section>
+
+      <!-- Right Column: Adaptive Controller & Sound Player -->
+      <section class="glass-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+            </svg>
+            적응형 동적 마스킹 엔진
+          </h2>
+          <span class="panel-subtext">Dynamic Noise Masking DSP</span>
+        </div>
+
+        <!-- Dynamic Engine Realtime State Card -->
+        <div class="adaptive-engine-status">
+          <div class="engine-status-row">
+            <div class="engine-title-group">
+              <div class="engine-pulse-indicator" id="enginePulse"></div>
+              <div>
+                <div class="engine-title" id="engineStatusTitle">상쇄 대기 중 (안정 소음)</div>
+                <div class="engine-subtitle" id="engineStatusSubtitle">설정된 임계치 이하로 베이스 음량 유지 중</div>
+              </div>
+            </div>
+            <div class="engine-vol-display">
+              <span class="engine-vol-percent" id="engineVolPercent">20%</span>
+              <span class="engine-vol-db-gain" id="engineGainDelta">+0.0 dB</span>
+            </div>
+          </div>
+          <!-- Live Volume Meter Track -->
+          <div class="realtime-slider-track">
+            <div class="realtime-slider-fill" id="realtimeVolFill"></div>
+            <div class="realtime-threshold-mark" id="thresholdMarkLine" style="left: 45%;"></div>
+          </div>
+        </div>
+
+        <!-- Real-time Dual Timeline Canvas (Ambient dB vs Masking Volume) -->
+        <div class="canvas-card">
+          <div class="panel-header" style="margin-bottom: 8px;">
+            <h3 class="panel-title" style="font-size: 0.9rem;">
+              실시간 적응 추이 그래프 (소음 레벨 vs 마스킹 볼륨)
+            </h3>
+          </div>
+          <div class="canvas-container">
+            <canvas id="historyCanvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Sound Library Selection Grid -->
+        <div class="sound-selector-section">
+          <div class="panel-header" style="margin-bottom: 0;">
+            <h3 class="panel-title" style="font-size: 0.95rem;">마스킹 사운드 선택</h3>
+            <span class="panel-subtext">100% 무손실 절차적 합성 사운드</span>
+          </div>
+
+          <div class="sound-grid">
+            <!-- Pink Noise (Optimal for focus) -->
+            <div class="sound-card active" data-sound="pink">
+              <div class="sound-icon-box">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+              </div>
+              <h3>핑크 노이즈</h3>
+              <p>부드러운 1/f 감쇄. 집중력 향상 및 가장 추천되는 마스킹음</p>
+              <div class="sound-playing-anim">
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+              </div>
+              <span class="badge-type">최적 집중</span>
+            </div>
+
+            <!-- Brown Noise (Deep bass for footfalls) -->
+            <div class="sound-card" data-sound="brown">
+              <div class="sound-icon-box">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728M8.464 15.536a5 5 0 010-7.072m7.072 0a5 5 0 010 7.072"/>
+                </svg>
+              </div>
+              <h3>브라운 노이즈</h3>
+              <p>깊고 묵직한 저음. 발소리, 문 쿵 닫힘, 저주파 소음 차단</p>
+              <div class="sound-playing-anim">
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+              </div>
+              <span class="badge-type">저음 충격 차단</span>
+            </div>
+
+            <!-- Rain Shower -->
+            <div class="sound-card" data-sound="rain">
+              <div class="sound-icon-box">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15zM8 19v2m4-2v2m4-2v2"/>
+                </svg>
+              </div>
+              <h3>편안한 빗소리</h3>
+              <p>필터 공진 합성 비와 빗방울. 마음 안정과 지속적 소음 차단</p>
+              <div class="sound-playing-anim">
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+              </div>
+              <span class="badge-type">자연음</span>
+            </div>
+
+            <!-- Forest Stream -->
+            <div class="sound-card" data-sound="stream">
+              <div class="sound-icon-box">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/>
+                </svg>
+              </div>
+              <h3>깊은 숲 시냇물</h3>
+              <p>LFO 변조 계곡 물소리. 청량감과 졸음 방지, 산뜻한 배경음</p>
+              <div class="sound-playing-anim">
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+              </div>
+              <span class="badge-type">청량 자연음</span>
+            </div>
+
+            <!-- Generative Classical -->
+            <div class="sound-card" data-sound="classical">
+              <div class="sound-icon-box">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+              </div>
+              <h3>생성형 힐링 피아노</h3>
+              <p>무한 변조 펜타토닉 앰비언트 코드. 스트레스 완화 및 심신 안정</p>
+              <div class="sound-playing-anim">
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+              </div>
+              <span class="badge-type">클래식 앰비언트</span>
+            </div>
+
+            <!-- Library Ambient -->
+            <div class="sound-card" data-sound="ambient">
+              <div class="sound-icon-box">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+              </div>
+              <h3>도서관 앰비언스</h3>
+              <p>온화한 공간 배음과 부드러운 허밍. 안정적인 독서실 분위기</p>
+              <div class="sound-playing-anim">
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+              </div>
+              <span class="badge-type">공간 배음</span>
+            </div>
+
+            <!-- Binaural Alpha Beats (10Hz) -->
+            <div class="sound-card" data-sound="binaural">
+              <div class="sound-icon-box">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                </svg>
+              </div>
+              <h3>바이노럴 알파파 (10Hz)</h3>
+              <p>좌우 주파수 차를 이용한 뇌파 동조. 초집중 몰입 상태 유도</p>
+              <div class="sound-playing-anim">
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+              </div>
+              <span class="badge-type">뇌파 동조 (이어폰)</span>
+            </div>
+
+            <!-- Pure White Noise -->
+            <div class="sound-card" data-sound="white">
+              <div class="sound-icon-box">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7"/>
+                </svg>
+              </div>
+              <h3>퓨어 화이트 노이즈</h3>
+              <p>전 주파수 대역 균일 출력. 모든 돌발 소음의 강력한 마스킹</p>
+              <div class="sound-playing-anim">
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+                <span class="sound-playing-bar"></span>
+              </div>
+              <span class="badge-type">강력 마스킹</span>
+            </div>
+          </div>
+
+          <!-- Custom Audio Upload Row -->
+          <div class="custom-audio-box">
+            <div class="custom-audio-info">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
+              <span id="customFileNameText">원하는 개인 음악(MP3/WAV) 추가 가능</span>
+            </div>
+            <div class="file-input-wrapper">
+              <button class="btn-upload">음원 파일 선택</button>
+              <input type="file" id="customAudioInput" accept="audio/*">
+            </div>
+          </div>
+        </div>
+
+        <!-- Presets Quick Buttons -->
+        <div style="margin-top: 24px;">
+          <span class="control-label">공부 장소 맞춤 프리셋</span>
+          <div class="preset-buttons">
+            <button class="btn-preset active" data-preset="library">독서실 / 조용한 도서관 (45dB)</button>
+            <button class="btn-preset" data-preset="studycafe">스터디카페 / 잔잔한 소음 (52dB)</button>
+            <button class="btn-preset" data-preset="home">가정집 / 생활소음 (58dB)</button>
+            <button class="btn-preset" data-preset="exam">모의고사 집중 모드 (42dB)</button>
+          </div>
+        </div>
+
+        <!-- Detailed Dynamic Sliders Controls -->
+        <div class="settings-grid">
+          <!-- Threshold Slider -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <span class="control-label">소음 반응 임계치 (Threshold)</span>
+              <span class="control-value" id="thresholdValDisplay">48 dB</span>
+            </div>
+            <input type="range" id="thresholdSlider" class="range-slider" min="35" max="75" value="48" step="1">
+            <div class="control-desc">이 소음 수치를 초과하면 백색소음 볼륨이 자동으로 상승합니다.</div>
+          </div>
+
+          <!-- Sensitivity Slider -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <span class="control-label">동적 반응 감도 (Sensitivity)</span>
+              <span class="control-value" id="sensitivityValDisplay">1.6x</span>
+            </div>
+            <input type="range" id="sensitivitySlider" class="range-slider" min="0.5" max="3.0" value="1.6" step="0.1">
+            <div class="control-desc">외부 소음 증가량 대비 백색소음이 얼마나 가파르게 상승할지 결정합니다.</div>
+          </div>
+
+          <!-- Base Volume Slider -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <span class="control-label">평상시 베이스 볼륨 (Base Vol)</span>
+              <span class="control-value" id="baseVolValDisplay">20%</span>
+            </div>
+            <input type="range" id="baseVolSlider" class="range-slider" min="5" max="50" value="20" step="1">
+            <div class="control-desc">주변이 조용할 때 잔잔하게 유지되는 기본 음량입니다.</div>
+          </div>
+
+          <!-- Max Volume (Ear protection limiter) Slider -->
+          <div class="control-group">
+            <div class="control-label-row">
+              <span class="control-label">청력 보호 최대 볼륨 제한 (Max Clamp)</span>
+              <span class="control-value" id="maxVolValDisplay">80%</span>
+            </div>
+            <input type="range" id="maxVolSlider" class="range-slider" min="50" max="100" value="80" step="1">
+            <div class="control-desc">갑작스런 큰 소음이 나도 이 수치 이상으로 볼륨이 커지지 않도록 청력을 보호합니다.</div>
+          </div>
+        </div>
+
+        <!-- Attack/Release Smoothing Presets -->
+        <div class="control-group" style="margin-top: 16px;">
+          <div class="control-label-row">
+            <span class="control-label">음량 변화 부드러움 (Attack/Release 속도)</span>
+            <span class="control-value" id="smoothingModeText">빠른 반응 & 부드러운 복귀 (권장)</span>
+          </div>
+          <div class="preset-buttons" style="margin-top: 6px;">
+            <button class="btn-preset active" data-smooth="fast-attack">빠른 반응 (소음 즉각 차단, 180ms)</button>
+            <button class="btn-preset" data-smooth="balanced">균형 모드 (자연스러운 페이드, 350ms)</button>
+            <button class="btn-preset" data-smooth="gentle">완만한 모드 (부드러운 음량 전환, 600ms)</button>
+          </div>
+        </div>
+
+
+      </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-tip">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <span><strong>팁:</strong> 이어폰을 착용하고 사용할 때 마이크와 이어폰의 피드백 없이 가장 정밀하게 외부 소음을 상쇄할 수 있습니다.</span>
+      </div>
+      <div>Study SoundGuard &bull; Pure Web Audio DSP Adaptive Engine &bull; Private & Secure (서버 전송 없이 로컬에서만 100% 처리)</div>
+    </footer>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="js/audio-engine.js"></script>
+  <script src="js/adaptive-controller.js"></script>
+  <script src="js/visualizer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
