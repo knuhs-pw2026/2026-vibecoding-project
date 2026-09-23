@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PocketPassage - 틈틈이 1문장 영어 지문 해석 코치</title>
+  <meta name="description" content="등하교길 자투리 시간에 스마트폰으로 한 문장씩 끊어 읽고, 수능 핵심 어법과 단어를 정리하며 변형 문제까지 풀어보는 모바일 영어 학습 앱">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="dark">
+  <div class="app-viewport">
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-msg" role="status" aria-live="polite"></div>
+
+    <!-- App Header -->
+    <header class="app-header">
+      <div class="header-top">
+        <div class="brand-badge" id="brandBtn" title="처음으로">
+          <div class="brand-icon">⚡</div>
+          <div>
+            <span class="brand-title">PocketPassage</span>
+            <span class="brand-tag">자투리 1문장 코치</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" id="btnThemeToggle" title="테마 변경 (다크/세피아/라이트)">🌓</button>
+          <button class="icon-btn" id="btnFontSize" title="글자 크기 조절">A</button>
+          <button class="icon-btn" id="btnHelp" title="사용 방법 안내">?</button>
+        </div>
+      </div>
+
+      <!-- Passage Selector & New Passage Button -->
+      <div class="passage-selector-wrap">
+        <span class="selector-label">지문 선택:</span>
+        <select id="passageSelect" class="passage-select" aria-label="학습할 영어 지문 선택"></select>
+        <button id="btnOpenNewPassageModal" class="btn-add-passage">+ 새 지문</button>
+      </div>
+
+      <!-- Passage Meta Info Bar -->
+      <div class="passage-meta-bar">
+        <div class="meta-tags">
+          <span id="badgeCategory" class="badge badge-purple">인문·과학</span>
+          <span id="badgeDifficulty" class="badge badge-blue">고난도 (킬러)</span>
+        </div>
+        <span id="textSource">2024 수능 기출</span>
+      </div>
+    </header>
+
+    <!-- Main Content Area (Tabs) -->
+    <main>
+      <!-- TAB 1: 1문장 집중 독해 모드 (Focus Reader) -->
+      <section id="tabFocus" class="tab-content active">
+        <div class="focus-container">
+          
+          <!-- Stepper & Progress -->
+          <div class="progress-card">
+            <div class="progress-info">
+              <span id="sentenceStepPill" class="progress-pill">문장 1 / 4</span>
+              <span id="sentencePercentText" style="font-size:0.75rem; color:var(--text-muted);">25%</span>
+            </div>
+            <div id="stepDotsContainer" class="step-dots"></div>
+          </div>
+
+          <!-- Quick Interactive Tool Toggles -->
+          <div class="tool-bar">
+            <button id="toggleChunking" class="toggle-chip active" title="의미 단위로 끊어서 직독직해">
+              <span>✂</span> 끊어읽기 슬래시 (/)
+            </button>
+            <button id="toggleGrammar" class="toggle-chip active" title="수능 핵심 어법 포인트 하이라이트">
+              <span>🏷</span> 어법 분석
+            </button>
+            <button id="toggleTransMode" class="toggle-chip" title="직독직해와 자연스러운 완역 전환">
+              <span>🔄</span> <span id="transModeLabel">직독직해 모드</span>
+            </button>
+          </div>
+
+          <!-- Sentence Focus Card -->
+          <div class="sentence-card">
+            <div class="sentence-card-header">
+              <span id="sentenceNumLabel" class="sentence-num-badge">SENTENCE 01</span>
+              <button id="btnSpeakSentence" class="audio-trigger-btn" title="원어민 발음 듣기 (TTS)">
+                <span>🔊</span> 원어민 듣기
+              </button>
+            </div>
+
+            <!-- English Sentence Display with Word Chips -->
+            <div id="sentenceEnBox" class="sentence-text-en"></div>
+
+            <!-- Chunking Breakdowns (직독직해 슬래시 단위) -->
+            <div id="chunkBox" class="chunk-container" style="display: flex;"></div>
+
+            <!-- Korean Translation Box -->
+            <div class="translation-box">
+              <div class="translation-label">
+                <span id="transBoxHeading">자연스러운 완역</span>
+                <button id="btnToggleTransView" class="translation-toggle-btn">해석 숨기기</button>
+              </div>
+              <div id="sentenceKoBox" class="sentence-text-ko"></div>
+            </div>
+
+            <!-- Grammar Points Section -->
+            <div id="grammarSection" class="grammar-breakdown-section">
+              <div class="section-sub-title">
+                <span>⚡</span> 수능·내신 핵심 어법 포인트
+              </div>
+              <div id="grammarCardsList" class="grammar-cards-list"></div>
+            </div>
+
+            <!-- Sentence Key Words & Meanings Full Strip -->
+            <div class="grammar-breakdown-section">
+              <div class="section-sub-title">
+                <span>📖</span> 이 문장의 핵심 단어 &amp; 한글 뜻 (터치 시 상세 사전/수정)
+              </div>
+              <div id="sentenceWordsStrip" class="sentence-words-strip"></div>
+            </div>
+          </div>
+
+          <!-- Prev / Next Navigation Controls -->
+          <div class="focus-nav-controls">
+            <button id="btnPrevSentence" class="btn-nav-step">
+              <span>←</span> 이전 문장
+            </button>
+            <button id="btnNextSentence" class="btn-nav-step primary">
+              다음 문장 <span>→</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: 전체 지문 조망 모드 (Full Passage) -->
+      <section id="tabFull" class="tab-content">
+        <div class="full-passage-card">
+          <div class="passage-summary-banner">
+            <strong>💡 지문 핵심 요약:</strong>
+            <p id="fullPassageSummary" style="margin-top:4px;"></p>
+          </div>
+
+          <div>
+            <span class="section-sub-title" style="margin-bottom:10px;">
+              <span>📝</span> 전체 본문 (문장을 터치하면 즉시 1문장 집중 모드로 전환됩니다)
+            </span>
+            <div id="fullSentenceList" style="display:flex; flex-direction:column; gap:12px;"></div>
+          </div>
+
+          <div class="translation-box" style="margin-top:8px;">
+            <div class="translation-label">지문 전체 완역</div>
+            <div id="fullTranslationBox" class="sentence-text-ko"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: 내 단어장 & 플래시카드 (Vocabulary Notebook) -->
+      <section id="tabVoca" class="tab-content">
+        <div class="voca-view-container">
+          
+          <div class="voca-header-row">
+            <div class="voca-mode-tabs">
+              <button id="btnVocaModeFlash" class="voca-mode-btn active">플래시카드</button>
+              <button id="btnVocaModeList" class="voca-mode-btn">단어 목록</button>
+            </div>
+            <span id="vocaStatsCount" class="voca-stats-pill">저장 4단어 (외움 1)</span>
+          </div>
+
+          <!-- Flashcard View Sub-Container -->
+          <div id="vocaFlashcardSub" style="display:block;">
+            <div style="display:flex; justify-content:flex-end; margin-bottom:4px;">
+              <button id="btnToggleAlwaysShowMeaning" class="toggle-chip" style="font-size:0.75rem; padding:4px 10px;">
+                👁 한글 뜻 앞면 표시: <strong id="alwaysShowMeaningStatus">OFF</strong>
+              </button>
+            </div>
+
+            <div class="flashcard-stage">
+              <div id="flashcard3D" class="flashcard-3d">
+                <!-- Front Face -->
+                <div class="card-face card-front">
+                  <span class="flashcard-hint" id="fcFrontHint">터치하여 뜻 확인 (클릭 시 뒤집힘)</span>
+                  <div id="fcWord" class="flashcard-word">discernment</div>
+                  <div id="fcPhonetic" class="flashcard-phonetic">/dɪˈsɜːrnmənt/</div>
+                  <!-- 앞면 상시 표시용 뜻 박스 (토글 시 노출) -->
+                  <div id="fcFrontMeaningBox" style="display:none; margin-top:8px; background:rgba(99,102,241,0.15); padding:6px 14px; border-radius:var(--radius-full); font-size:1.05rem; font-weight:700; color:var(--accent-primary);"></div>
+                  <div style="display:flex; gap:8px; margin-top:10px;">
+                    <button id="btnFcAudio" class="icon-btn" title="발음 듣기">🔊</button>
+                    <button id="btnFcFlipFront" class="btn-add-passage" style="background:var(--bg-secondary); border:1px solid var(--border-subtle); color:var(--text-primary);" title="카드 뒤집기">뜻 확인 🔄</button>
+                  </div>
+                </div>
+                <!-- Back Face -->
+                <div class="card-face card-back">
+                  <span class="flashcard-hint">터치하여 앞면으로</span>
+                  <div id="fcPos" style="font-family:var(--font-mono); color:var(--accent-cyan); font-size:0.85rem;">[n.]</div>
+                  <div id="fcMeaning" class="flashcard-meaning">분별력, 안목</div>
+                  <div id="fcExample" class="flashcard-example">Cultivate critical discernment to distinguish truth.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Flashcard Controls -->
+            <div class="flashcard-controls">
+              <button id="btnFcPrev" class="btn-card-action" title="이전 단어">←</button>
+              <button id="btnFcMemorized" class="btn-card-action memorized-toggle" title="외운 단어로 표시">✓</button>
+              <button id="btnFcSpeak" class="btn-card-action" title="발음 재생">🔊</button>
+              <button id="btnFcNext" class="btn-card-action" title="다음 단어">→</button>
+            </div>
+            <p style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:10px;">
+              💡 카드를 탭하거나 스페이스바를 누르면 한글 뜻이 나타납니다.
+            </p>
+          </div>
+
+          <!-- List View Sub-Container -->
+          <div id="vocaListSub" style="display:none;">
+            <div class="tool-bar" style="margin-bottom:8px;">
+              <input type="text" id="vocaSearchInput" class="text-input" placeholder="🔍 단어 또는 한글 뜻 검색..." style="flex:1;">
+              <button id="btnFilterAll" class="toggle-chip active">전체</button>
+              <button id="btnFilterUnlearned" class="toggle-chip">외울 단어</button>
+            </div>
+            <div id="vocaListContainer" class="voca-list-container"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: 지문 변형 퀴즈 & 유사 지문 (Variation Quiz) -->
+      <section id="tabQuiz" class="tab-content">
+        <div class="quiz-container">
+          
+          <!-- Paraphrased Similar Passage Accordion -->
+          <div class="paraphrase-card">
+            <div id="btnToggleParaphrase" class="paraphrase-header">
+              <div class="paraphrase-title">
+                <span>✨</span> 지문 분석 기반 유사 지문 (Paraphrased Passage)
+              </div>
+              <span id="paraphraseIcon">▼</span>
+            </div>
+            <div id="paraphraseContent" style="display:none; flex-direction:column; gap:8px;">
+              <div id="paraphrasedTextEn" class="paraphrase-body"></div>
+              <div id="paraphrasedTextKo" class="paraphrase-ko"></div>
+            </div>
+          </div>
+
+          <!-- Quiz Type Selector Tabs -->
+          <div class="quiz-tabs">
+            <button class="quiz-tab-btn active" data-quiz-type="grammar">① 어법상 틀린 것</button>
+            <button class="quiz-tab-btn" data-quiz-type="blank">② 빈칸 추론</button>
+            <button class="quiz-tab-btn" data-quiz-type="order">③ 글의 순서 배열</button>
+          </div>
+
+          <!-- Question Interactive Card -->
+          <div class="question-card">
+            <div id="quizInstruction" class="quiz-instruction">
+              다음 글의 밑줄 친 부분 중, 어법상 틀린 것을 고르시오.
+            </div>
+
+            <!-- Quiz Passage Context -->
+            <div id="quizPassageBox" class="quiz-passage-box"></div>
+
+            <!-- Multiple Choice Options -->
+            <div id="quizOptionsList" class="quiz-options-list"></div>
+
+            <!-- Immediate Result & Detailed Explanation -->
+            <div id="quizExplanationBox" class="quiz-explanation-box">
+              <div class="explanation-title">
+                <span id="explanationIcon">🎯</span>
+                <span id="explanationTitle">정답 및 상세 어법 해설</span>
+              </div>
+              <div id="quizExplanationBody" class="explanation-body"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Navigation Dock (4 Major Tabs) -->
+    <nav class="bottom-dock" aria-label="메인 탭 메뉴">
+      <button class="nav-tab-btn active" data-tab="tabFocus" id="navFocus">
+        <span class="nav-tab-icon">🎯</span>
+        <span class="nav-tab-label">한문장 포커스</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tabFull" id="navFull">
+        <span class="nav-tab-icon">📖</span>
+        <span class="nav-tab-label">전체 지문</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tabVoca" id="navVoca">
+        <span class="nav-tab-icon">⭐</span>
+        <span class="nav-tab-label">내 단어장</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tabQuiz" id="navQuiz">
+        <span class="nav-tab-icon">🧠</span>
+        <span class="nav-tab-label">변형 퀴즈</span>
+      </button>
+    </nav>
+
+    <!-- Modal 1: Quick Word Dictionary & Add to Voca -->
+    <div id="modalWord" class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="sheet-handle"></div>
+        <div class="modal-header">
+          <span style="font-size:0.78rem; font-weight:700; color:var(--text-muted);">원터치 영한사전 &amp; 단어장</span>
+          <button id="btnCloseWordModal" class="btn-close-modal">&times;</button>
+        </div>
+        <div class="word-pop-details">
+          <div class="pop-word-head">
+            <span id="popWordTerm" class="pop-word-term">word</span>
+            <span id="popWordPos" class="pop-word-pos">n.</span>
+            <span id="popWordPhonetic" style="font-family:var(--font-mono); color:var(--text-muted); font-size:0.85rem;"></span>
+          </div>
+
+          <!-- 뜻 표시 및 직접 수정 가능한 입력 박스 -->
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <label style="font-size:0.72rem; font-weight:700; color:var(--text-muted);">한글 뜻 (필요 시 직접 수정 가능):</label>
+            <input type="text" id="popWordMeaningInput" class="text-input" style="font-size:1.15rem; font-weight:700; color:var(--accent-primary); width:100%; border:1px solid var(--border-focus);">
+          </div>
+
+          <p id="popWordExample" style="font-size:0.85rem; color:var(--text-secondary); font-style:italic; line-height:1.5;"></p>
+          
+          <!-- 외부 공인 사전 연동 링크 -->
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span style="font-size:0.72rem; color:var(--text-muted);">외부 사전:</span>
+            <a id="linkNaverDict" href="#" target="_blank" class="toggle-chip" style="font-size:0.72rem; padding:3px 8px; text-decoration:none;">네이버 사전 ↗</a>
+            <a id="linkDaumDict" href="#" target="_blank" class="toggle-chip" style="font-size:0.72rem; padding:3px 8px; text-decoration:none;">다음 사전 ↗</a>
+          </div>
+
+          <div class="pop-word-actions">
+            <button id="btnSaveToVoca" class="btn-pop-save">
+              <span>⭐</span> <span id="btnSaveToVocaText">내 단어장에 저장</span>
+            </button>
+            <button id="btnPopSpeak" class="btn-pop-speak" title="발음 듣기">🔊</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 2: Custom Passage Input -->
+    <div id="modalCustomPassage" class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="sheet-handle"></div>
+        <div class="modal-header">
+          <h3 class="modal-title">📝 나만의 영어 지문 추가</h3>
+          <button id="btnCloseCustomModal" class="btn-close-modal">&times;</button>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="customTitleInput">지문 제목 (예: 9월 모의고사 34번, 수능특강 12강 3번)</label>
+          <input type="text" id="customTitleInput" class="text-input" placeholder="제목을 입력하세요">
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="customTextInput">영어 본문 붙여넣기</label>
+          <textarea id="customTextInput" class="textarea-input" placeholder="영어 지문 본문을 여기에 붙여넣으세요. 스마트 엔진이 자동으로 문장과 어법을 분할합니다."></textarea>
+        </div>
+        <button id="btnSubmitCustomPassage" class="btn-submit-passage">
+          지문 분석 시작하기 ⚡
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal 3: Guide / Help -->
+    <div id="modalHelp" class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="sheet-handle"></div>
+        <div class="modal-header">
+          <h3 class="modal-title">💡 PocketPassage 사용법</h3>
+          <button id="btnCloseHelpModal" class="btn-close-modal">&times;</button>
+        </div>
+        <div style="font-size:0.9rem; line-height:1.7; color:var(--text-secondary); display:flex; flex-direction:column; gap:10px;">
+          <p><strong>1. 등하교 자투리 시간 활용</strong>: 책을 펼치기 힘든 만원 버스나 지하철에서 한 손으로 1문장씩 꼼꼼하게 뜯어보세요.</p>
+          <p><strong>2. 끊어읽기 &amp; 어법 배지</strong>: 슬래시(/) 단위로 의미를 파악하고 핵심 수능 어법(관계사, 분사구문, 5형식 등)을 복습하세요.</p>
+          <p><strong>3. 원터치 단어장</strong>: 본문의 모르는 단어를 터치하면 즉시 뜻과 발음을 확인하고 내 단어장에 별표(⭐) 저장할 수 있습니다. 한글 뜻을 직접 수정할 수도 있습니다.</p>
+          <p><strong>4. 실전 변형 문제</strong>: 지문 학습 후 어법상 틀린 것, 빈칸 추론, 순서 배열 퀴즈를 풀며 완벽히 체화하세요.</p>
+          <p><strong>단축키 (키보드 지원)</strong>: [← / → 방향키]: 이전/다음 문장, [스페이스바]: 플래시카드 뒤집기, [ESC]: 창 닫기</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="dict.js"></script>
+  <script src="presets.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
