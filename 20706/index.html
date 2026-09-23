@@ -1,0 +1,2599 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RehabVision AI - 컴퓨터 비전 기반 맞춤형 홈 재활 가이드</title>
+  
+  <!-- SEO & 메타 정보 -->
+  <meta name="description" content="웹캠 Pose Detection 기반 실시간 관절 각도(ROM) 분석, 보상작용 음성/시각 피드백, 물리치료사 맞춤 처방 루틴 및 재활 이행도 리포트 시스템">
+  <meta name="keywords" content="물리치료, 재활운동, 컴퓨터비전, MediaPipe, 자세분석, ROM, 거북목, 오십견, 홈트레이닝">
+
+  <!-- Google Fonts & Chart.js & MediaPipe CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js for Rehabilitation Reports -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Canvas Confetti for Celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- MediaPipe Pose & Camera Utils -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+  <style>
+    /* ==========================================================================
+       1. 디자인 시스템 & 전역 토큰 (Clinical Tech Dark Theme)
+       ========================================================================== */
+    :root {
+      --bg-dark: #070d18;
+      --bg-card: rgba(15, 23, 42, 0.78);
+      --bg-card-hover: rgba(30, 41, 59, 0.88);
+      --bg-sidebar: #0b1325;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(6, 182, 212, 0.35);
+      
+      --cyan-primary: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.4);
+      --emerald-accent: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.4);
+      --amber-warn: #f59e0b;
+      --rose-danger: #f43f5e;
+      --indigo-accent: #6366f1;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --font-heading: 'Outfit', -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --shadow-hud: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+      --shadow-glow: 0 0 25px rgba(6, 182, 212, 0.25);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(6, 182, 212, 0.07) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 40%);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==========================================================================
+       2. 네비게이션 헤더 (Header Bar)
+       ========================================================================== */
+    header {
+      background: rgba(11, 19, 37, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, #06b6d4, #10b981);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .brand-logo-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: #fff;
+    }
+
+    .brand-titles h1 {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #ffffff, #a5f3fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      font-size: 0.65rem;
+      padding: 2px 7px;
+      background: rgba(6, 182, 212, 0.2);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      border-radius: 999px;
+      color: #38bdf8;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-titles p {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .header-center-mode {
+      display: flex;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+    }
+
+    .mode-btn {
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .mode-btn.active {
+      background: var(--cyan-primary);
+      color: #03141f;
+      box-shadow: 0 2px 10px rgba(6, 182, 212, 0.3);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      color: #34d399;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse-dot 1.8s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-icon.active {
+      color: var(--cyan-primary);
+      border-color: var(--cyan-primary);
+      background: rgba(6, 182, 212, 0.1);
+    }
+
+    /* ==========================================================================
+       3. 메인 레이아웃 (3-Column Layout)
+       ========================================================================== */
+    .app-container {
+      display: grid;
+      grid-template-columns: 340px 1fr 340px;
+      gap: 16px;
+      padding: 16px 20px;
+      flex: 1;
+      height: calc(100vh - 68px);
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    @media (max-width: 1280px) {
+      .app-container {
+        grid-template-columns: 300px 1fr 300px;
+      }
+    }
+
+    @media (max-width: 1080px) {
+      .app-container {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+      }
+    }
+
+    .panel {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow-hud);
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .panel-header h2 {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-heading);
+    }
+
+    .panel-content {
+      padding: 16px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Custom Scrollbar */
+    .panel-content::-webkit-scrollbar {
+      width: 5px;
+    }
+    .panel-content::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+    }
+
+    /* ==========================================================================
+       4. 좌측 사이드바: 환자 처방 및 운동 가이드
+       ========================================================================== */
+    .patient-card {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(99, 102, 241, 0.08));
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+
+    .patient-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .patient-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #fff;
+    }
+
+    .rx-badge {
+      font-size: 0.68rem;
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .patient-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .patient-details span strong {
+      color: #e2e8f0;
+      font-weight: 500;
+    }
+
+    .section-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--cyan-primary);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .exercise-selector {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .exercise-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .exercise-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .exercise-card.active {
+      background: rgba(6, 182, 212, 0.12);
+      border-color: var(--cyan-primary);
+      box-shadow: 0 0 14px rgba(6, 182, 212, 0.2);
+    }
+
+    .ex-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ex-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .ex-tag {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+    }
+
+    .ex-desc {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .ex-target-metrics {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+      font-size: 0.72rem;
+      color: #38bdf8;
+      font-family: var(--font-mono);
+    }
+
+    .clinical-guideline {
+      background: rgba(245, 158, 11, 0.08);
+      border-left: 3px solid var(--amber-warn);
+      padding: 10px 12px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 0.74rem;
+      color: #fde68a;
+      line-height: 1.45;
+    }
+
+    .clinical-guideline strong {
+      color: #fbbf24;
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.76rem;
+    }
+
+    .param-control-group {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .param-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .param-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    .param-val {
+      font-family: var(--font-mono);
+      color: var(--cyan-primary);
+      font-weight: 600;
+    }
+
+    .range-slider {
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .range-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--cyan-primary);
+      box-shadow: 0 0 6px var(--cyan-primary);
+      cursor: pointer;
+    }
+
+    /* ==========================================================================
+       5. 중앙 스테이지: 웹캠 피드 & HUD 오버레이
+       ========================================================================== */
+    .center-stage {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .viewport-card {
+      position: relative;
+      background: #000;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      aspect-ratio: 16 / 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
+    }
+
+    /* 비디오 엘리먼트 (백그라운드 처리) */
+    #webcam-video {
+      display: none;
+    }
+
+    /* 드로잉 캔버스 */
+    #output-canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* 거울 뷰 기본 */
+    }
+
+    /* HUD 오버레이 레이어 */
+    .hud-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .hud-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .exercise-state-badge {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+
+    .state-indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cyan-primary);
+      box-shadow: 0 0 8px var(--cyan-primary);
+    }
+
+    .live-angle-pill {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .live-angle-pill strong {
+      color: var(--cyan-primary);
+      font-size: 1.05rem;
+    }
+
+    /* 보상작용 경고 배너 */
+    .alert-banner {
+      align-self: center;
+      background: rgba(244, 63, 94, 0.92);
+      border: 1px solid #fda4af;
+      padding: 10px 22px;
+      border-radius: 999px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 25px rgba(244, 63, 94, 0.6);
+      transform: translateY(-20px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: auto;
+    }
+
+    .alert-banner.active {
+      transform: translateY(0);
+      opacity: 1;
+      animation: alert-shake 0.4s ease;
+    }
+
+    @keyframes alert-shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-4px); }
+      40%, 80% { transform: translateX(4px); }
+    }
+
+    .hud-bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .target-rom-indicator {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border-color);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      backdrop-filter: blur(8px);
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .target-rom-indicator strong {
+      color: #38bdf8;
+      font-family: var(--font-mono);
+      font-size: 0.86rem;
+    }
+
+    .hold-timer-hud {
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hold-timer-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .hold-timer-val {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #34d399;
+    }
+
+    /* 컨트롤 툴바 */
+    .stage-controls {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .main-workout-btn {
+      flex: 1;
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: var(--font-heading);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+      background: linear-gradient(135deg, #06b6d4, #0284c7);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(6, 182, 212, 0.35);
+    }
+
+    .main-workout-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
+    }
+
+    .main-workout-btn.stop {
+      background: linear-gradient(135deg, #f43f5e, #be123c);
+      box-shadow: 0 4px 15px rgba(244, 63, 94, 0.35);
+    }
+
+    .secondary-btn {
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .secondary-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* 시뮬레이션 제어 바 (데모 모드 시 노출) */
+    .sim-control-bar {
+      display: none;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      font-size: 0.78rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sim-control-bar.active {
+      display: flex;
+    }
+
+    .sim-toggle-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #c7d2fe;
+    }
+
+    /* ==========================================================================
+       6. 우측 사이드바: 실시간 바이탈 & 세션 텔레메트리
+       ========================================================================== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .stat-value {
+      font-family: var(--font-mono);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .stat-value.primary {
+      color: var(--cyan-primary);
+    }
+
+    .stat-value.success {
+      color: var(--emerald-accent);
+    }
+
+    .stat-sub {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+    }
+
+    .reps-progress-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .reps-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .reps-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .reps-count-text {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--cyan-primary);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #06b6d4, #10b981);
+      width: 0%;
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    .accuracy-gauge-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .accuracy-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .accuracy-score {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--emerald-accent);
+    }
+
+    /* 보상작용 실시간 로그 리스트 */
+    .log-container {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      flex: 1;
+      max-height: 160px;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.73rem;
+      font-family: var(--font-mono);
+    }
+
+    .log-item {
+      padding: 5px 8px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      border-left: 2px solid var(--border-color);
+    }
+
+    .log-item.warning {
+      background: rgba(245, 158, 11, 0.1);
+      border-left-color: var(--amber-warn);
+      color: #fde68a;
+    }
+
+    .log-item.danger {
+      background: rgba(244, 63, 94, 0.1);
+      border-left-color: var(--rose-danger);
+      color: #fda4af;
+    }
+
+    .recent-coach-bubble {
+      background: rgba(6, 182, 212, 0.08);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 0.76rem;
+      color: #bae6fd;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .recent-coach-bubble svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      stroke: var(--cyan-primary);
+    }
+
+    /* ==========================================================================
+       7. 치료사 분석 리포트 모달 (Report & Clinical Dashboard Modal)
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(7, 13, 24, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      opacity: 1;
+    }
+
+    .report-modal {
+      background: #0f172a;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .report-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .report-header h3 {
+      font-family: var(--font-heading);
+      font-size: 1.2rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .report-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .summary-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .summary-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .kpi-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      text-align: center;
+    }
+
+    .kpi-title {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .kpi-value {
+      font-family: var(--font-mono);
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .charts-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .charts-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      height: 250px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-box h4 {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .vas-pain-section {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .vas-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .vas-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .pt-evaluation-box {
+      background: rgba(16, 185, 129, 0.05);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    .pt-evaluation-box h4 {
+      color: #34d399;
+      font-size: 0.88rem;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .report-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* ==========================================================================
+       8. 인쇄(Print) 전용 스타일 (병원 제출용)
+       ========================================================================== */
+    @media print {
+      body {
+        background: #fff !important;
+        color: #000 !important;
+      }
+      header, .app-container, .modal-backdrop:not(.open) {
+        display: none !important;
+      }
+      .modal-backdrop.open {
+        position: static;
+        background: none;
+        padding: 0;
+      }
+      .report-modal {
+        border: none;
+        box-shadow: none;
+        color: #000;
+        background: #fff;
+        max-width: 100%;
+      }
+      .report-footer {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       헤더 네비게이션
+       ========================================================================== -->
+  <header>
+    <div class="brand-group">
+      <div class="brand-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+      </div>
+      <div class="brand-titles">
+        <h1>RehabVision AI <span class="brand-badge">PhysioCare v2.0</span></h1>
+        <p>컴퓨터 비전 기반 자세 분석 및 환자 맞춤형 홈트레이닝 재활 가이드</p>
+      </div>
+    </div>
+
+    <!-- 중앙: 모드 선택 (실시간 웹캠 vs 시뮬레이션 데모) -->
+    <div class="header-center-mode">
+      <button id="mode-webcam-btn" class="mode-btn active" onclick="app.setMode('webcam')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+        </svg>
+        실시간 웹캠 AI
+      </button>
+      <button id="mode-sim-btn" class="mode-btn" onclick="app.setMode('simulation')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z"/>
+        </svg>
+        가상 환자 시뮬레이션 (데모)
+      </button>
+    </div>
+
+    <!-- 우측 상태 및 액션 -->
+    <div class="header-actions">
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        <span id="system-status-text">Vision Engine Ready</span>
+      </div>
+
+      <button id="audio-toggle-btn" class="btn-icon active" title="음성 코칭 켜기/끄기" onclick="app.toggleAudioCoach()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+      </button>
+
+      <button class="secondary-btn" onclick="app.openReportModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+        </svg>
+        재활 리포트
+      </button>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       메인 3분할 워크스페이스
+       ========================================================================== -->
+  <main class="app-container">
+    
+    <!-- 1. 좌측 패널: 환자 처방전 및 운동 가이드 -->
+    <aside class="panel">
+      <div class="panel-header">
+        <h2>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-primary)" stroke-width="2">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+          </svg>
+          물리치료 처방전 (Rx)
+        </h2>
+        <span class="rx-badge">처방 등록완료</span>
+      </div>
+
+      <div class="panel-content">
+        <!-- 환자 및 주치의 정보 카드 -->
+        <div class="patient-card">
+          <div class="patient-header">
+            <span class="patient-name">김재활 환자 (남/29세)</span>
+            <span style="font-size: 0.72rem; color: #a5f3fc;">차트번호: PT-2026-081</span>
+          </div>
+          <div class="patient-details">
+            <span>주 진단: <strong>유착성 관절낭염 (오십견)</strong></span>
+            <span>담당의: <strong>박지훈 수석 물리치료사</strong></span>
+            <span>경추 상태: <strong>전방머리자세(거북목)</strong></span>
+            <span>처방 세션: <strong>일 2회 / 7일차</strong></span>
+          </div>
+        </div>
+
+        <!-- 운동 목록 선택기 -->
+        <div class="section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          재활 운동 프로토콜 선택
+        </div>
+
+        <div class="exercise-selector">
+          <!-- 1. 오십견 외전 -->
+          <div id="ex-card-shoulder" class="exercise-card active" onclick="app.selectExercise('shoulder_abduction')">
+            <div class="ex-top">
+              <span class="ex-name">1. 견관절 외전 재활 (Shoulder Abduction)</span>
+              <span class="ex-tag">오십견 / 회전근개</span>
+            </div>
+            <p class="ex-desc">견갑골을 안정화한 상태에서 팔을 옆으로 들어 올려 관절 가동 범위를 점진적으로 회복합니다.</p>
+            <div class="ex-target-metrics">
+              <span>목표 ROM: 90°</span> • <span>반복: 10회</span> • <span>유지: 3초</span>
+            </div>
+          </div>
+
+          <!-- 2. 거북목 친턱 -->
+          <div id="ex-card-neck" class="exercise-card" onclick="app.selectExercise('chin_tuck')">
+            <div class="ex-top">
+              <span class="ex-name">2. 친 턱 경추 교정 (Chin-Tuck Retraction)</span>
+              <span class="ex-tag">거북목 / 경추통</span>
+            </div>
+            <p class="ex-desc">턱을 가볍게 뒤로 당겨 경추 심부 굴곡근을 강화하고 후두하근의 과긴장을 이완합니다.</p>
+            <div class="ex-target-metrics">
+              <span>목표 변위: 귀-어깨 정렬</span> • <span>유지: 5초</span>
+            </div>
+          </div>
+
+          <!-- 3. 골반 둔근 브릿지 -->
+          <div id="ex-card-bridge" class="exercise-card" onclick="app.selectExercise('pelvic_bridge')">
+            <div class="ex-top">
+              <span class="ex-name">3. 골반 둔근 브릿지 (Pelvic Glute Bridge)</span>
+              <span class="ex-tag">요추 안정성 / 디스크</span>
+            </div>
+            <p class="ex-desc">둔근과 햄스트링을 활용해 골반을 수평으로 들어 올려 요추-골반 복합체 안정성을 향상시킵니다.</p>
+            <div class="ex-target-metrics">
+              <span>목표 각도: 175° (수평)</span> • <span>유지: 3초</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 임상 가이드라인 & 주의사항 -->
+        <div class="clinical-guideline" id="clinical-tip-box">
+          <strong>💡 물리치료사 코칭 팁:</strong>
+          팔을 올릴 때 <strong>어깨(승모근)가 먼저 으쓱 솟아오르는 보상작용</strong>이 발생하면 즉시 팔을 멈추고 견갑골을 끌어내리세요.
+        </div>
+
+        <!-- 처방 목표 파라미터 세부 조절 -->
+        <div class="section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          처방 파라미터 미세 조정
+        </div>
+
+        <div class="param-control-group">
+          <div class="param-item">
+            <div class="param-label">
+              <span>목표 가동 각도 (Target ROM)</span>
+              <span class="param-val" id="target-rom-disp">90°</span>
+            </div>
+            <input type="range" class="range-slider" id="target-rom-slider" min="45" max="170" value="90" oninput="app.updateTargetRom(this.value)">
+          </div>
+
+          <div class="param-item">
+            <div class="param-label">
+              <span>목표 반복 횟수 (Target Reps)</span>
+              <span class="param-val" id="target-reps-disp">10회</span>
+            </div>
+            <input type="range" class="range-slider" id="target-reps-slider" min="3" max="25" value="10" oninput="app.updateTargetReps(this.value)">
+          </div>
+
+          <div class="param-item">
+            <div class="param-label">
+              <span>자세 유지 시간 (Hold Time)</span>
+              <span class="param-val" id="target-hold-disp">3초</span>
+            </div>
+            <input type="range" class="range-slider" id="target-hold-slider" min="1" max="10" value="3" oninput="app.updateTargetHold(this.value)">
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 2. 중앙 패널: 비전 캔버스 스테이지 & HUD -->
+    <section class="center-stage">
+      <div class="viewport-card" id="viewport-container">
+        <!-- 원본 웹캠 비디오 엘리먼트 (보이지 않게 처리) -->
+        <video id="webcam-video" playsinline></video>
+        <!-- 실시간 그래픽 및 스켈레톤 렌더링 캔버스 -->
+        <canvas id="output-canvas" width="1280" height="800"></canvas>
+
+        <!-- HUD 오버레이 -->
+        <div class="hud-overlay">
+          <!-- 상단 상태 & 실시간 각도 배지 -->
+          <div class="hud-top-bar">
+            <div class="exercise-state-badge">
+              <span class="state-indicator-dot" id="hud-dot"></span>
+              <span id="hud-exercise-state">준비 자세를 취해주세요</span>
+            </div>
+
+            <div class="live-angle-pill">
+              <span>현재 각도:</span>
+              <strong id="hud-current-angle">0.0°</strong>
+            </div>
+          </div>
+
+          <!-- 중앙 보상작용 경고 배너 -->
+          <div id="compensation-alert-banner" class="alert-banner">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span id="alert-banner-text">보상작용 감지: 어깨가 5도 이상 올라갔습니다!</span>
+          </div>
+
+          <!-- 하단 지표 -->
+          <div class="hud-bottom-bar">
+            <div class="target-rom-indicator">
+              <span>처방 목표: <strong id="hud-target-rom-val">90°</strong></span>
+              <span style="margin: 0 4px; opacity: 0.4;">|</span>
+              <span>운동 부위: <strong id="hud-target-body-part">우측 상지</strong></span>
+            </div>
+
+            <div class="hold-timer-hud" id="hud-hold-box">
+              <span class="hold-timer-text">유지 시간</span>
+              <span class="hold-timer-val" id="hud-hold-timer-val">0.0s</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 시뮬레이션 데모 전용 바 -->
+      <div id="sim-control-bar" class="sim-control-bar">
+        <div class="sim-toggle-pill">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span><strong>시뮬레이션 모드 실행 중</strong>: 가상 인체 모델이 관절 각도를 자동 시뮬레이션합니다.</span>
+        </div>
+        <div style="display:flex; gap: 8px;">
+          <button class="secondary-btn" style="padding: 4px 10px; font-size: 0.75rem;" onclick="app.toggleSimCompensation()">
+            <span id="sim-comp-toggle-text">⚠️ 보상작용 유발 테스트</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 하단 메인 제어 바 -->
+      <div class="stage-controls">
+        <button id="start-workout-btn" class="main-workout-btn" onclick="app.toggleWorkoutSession()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          <span id="start-btn-label">재활 운동 세션 시작</span>
+        </button>
+
+        <button class="secondary-btn" onclick="app.resetSessionCounter()" title="현재 세트 카운트 리셋">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+          초기화
+        </button>
+
+        <button class="secondary-btn" onclick="app.calibrateZero()" title="초기 자세 영점 기준 설정">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/>
+            <line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+          </svg>
+          영점(Calibration)
+        </button>
+      </div>
+    </section>
+
+    <!-- 3. 우측 패널: 실시간 텔레메트리 & 자세 분석 로그 -->
+    <aside class="panel">
+      <div class="panel-header">
+        <h2>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--emerald-accent)" stroke-width="2">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+          실시간 분석 텔레메트리
+        </h2>
+        <span style="font-size: 0.72rem; color: var(--emerald-accent); font-family: var(--font-mono);">LIVE FEED</span>
+      </div>
+
+      <div class="panel-content">
+        <!-- 상단 핵심 4개 수치 카드 -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">현재 반복 횟수</span>
+            <div class="stat-value primary" id="tele-current-reps">0 <span style="font-size: 0.85rem; color: var(--text-muted);">/ 10</span></div>
+            <span class="stat-sub" id="tele-set-info">1세트 진행 중</span>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">최고 도달 가동범위</span>
+            <div class="stat-value success" id="tele-max-rom">0.0°</div>
+            <span class="stat-sub" id="tele-target-rom-sub">목표 90° 기준</span>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">보상작용 감지</span>
+            <div class="stat-value" id="tele-comp-count" style="color: var(--amber-warn);">0회</div>
+            <span class="stat-sub">승모근 으쓱임/기울임</span>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">운동 지속 시간</span>
+            <div class="stat-value" id="tele-session-time">00:00</div>
+            <span class="stat-sub">총 세션 시간</span>
+          </div>
+        </div>
+
+        <!-- 반복 횟수 게이지 -->
+        <div class="reps-progress-box">
+          <div class="reps-header">
+            <span class="reps-title">세트 목표 달성률</span>
+            <span class="reps-count-text" id="reps-percent-text">0%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="reps-progress-bar"></div>
+          </div>
+        </div>
+
+        <!-- 실시간 자세 정확도 스코어 -->
+        <div class="accuracy-gauge-card">
+          <div class="accuracy-header">
+            <span>자세 정확도 종합 점수 (Accuracy)</span>
+            <span class="accuracy-score" id="accuracy-score-text">100%</span>
+          </div>
+          <div class="progress-track" style="height: 6px;">
+            <div class="progress-fill" id="accuracy-bar" style="background: linear-gradient(90deg, #10b981, #06b6d4); width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- 최근 코칭 음성 피드백 텍스트 버블 -->
+        <div class="recent-coach-bubble">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span id="coach-bubble-msg">AI 물리치료 코칭 시스템이 대기 중입니다. 운동을 시작해주세요.</span>
+        </div>
+
+        <!-- 실시간 감지 로그 -->
+        <div class="section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+          자세 편차 및 이벤트 로그
+        </div>
+
+        <div class="log-container" id="event-log-container">
+          <div class="log-item">
+            <span>[14:12:00] 시스템 초기화 완료</span>
+            <span>정상</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ==========================================================================
+       치료사 종합 분석 리포트 모달 (Report & Clinical Dashboard Modal)
+       ========================================================================== -->
+  <div id="report-modal" class="modal-backdrop">
+    <div class="report-modal">
+      <div class="report-header">
+        <h3>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-primary)" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          환자 홈 재활 종합 임상 리포트 (PT Clinical Report)
+        </h3>
+        <button class="btn-icon" onclick="app.closeReportModal()" title="닫기">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="report-body">
+        <!-- 1. 핵심 지표 요약 -->
+        <div class="summary-kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-title">목표 완수율 (Compliance)</div>
+            <div class="kpi-value" id="rep-kpi-compliance" style="color: var(--cyan-primary);">100%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">자세 평균 정확도</div>
+            <div class="kpi-value" id="rep-kpi-accuracy" style="color: var(--emerald-accent);">94.2%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">세션 최고 관절 가동도</div>
+            <div class="kpi-value" id="rep-kpi-rom" style="color: #38bdf8;">92.5°</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">보상작용 발생 빈도</div>
+            <div class="kpi-value" id="rep-kpi-comp" style="color: var(--amber-warn);">2회</div>
+          </div>
+        </div>
+
+        <!-- 2. 차트 시각화 (회복 추이 & 보상작용 분류) -->
+        <div class="charts-row">
+          <div class="chart-box">
+            <h4>📈 주간 관절 가동 범위 (ROM) 회복 추이 비교</h4>
+            <div style="flex:1; position: relative;">
+              <canvas id="rom-recovery-chart"></canvas>
+            </div>
+          </div>
+          <div class="chart-box">
+            <h4>📊 관절 보상작용 패턴 비율</h4>
+            <div style="flex:1; position: relative;">
+              <canvas id="comp-distribution-chart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 환자 주관적 통증 척도 (VAS Slider) -->
+        <div class="vas-pain-section">
+          <div class="section-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            환자 주관적 통증 평가 (VAS Pain Score : 0 통증 없음 ~ 10 극심한 통증)
+          </div>
+          <div class="vas-inputs">
+            <div class="vas-item">
+              <div class="param-label">
+                <span>운동 전 통증 점수 (Pre-Session)</span>
+                <span class="param-val" id="vas-pre-disp">6.0 점</span>
+              </div>
+              <input type="range" class="range-slider" min="0" max="10" step="0.5" value="6" oninput="document.getElementById('vas-pre-disp').innerText = this.value + ' 점'">
+            </div>
+            <div class="vas-item">
+              <div class="param-label">
+                <span>운동 후 통증 점수 (Post-Session)</span>
+                <span class="param-val" id="vas-post-disp" style="color: var(--emerald-accent);">3.5 점</span>
+              </div>
+              <input type="range" class="range-slider" min="0" max="10" step="0.5" value="3.5" oninput="document.getElementById('vas-post-disp').innerText = this.value + ' 점'">
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. 치료사용 AI 자동 분석 종합 소견 -->
+        <div class="pt-evaluation-box">
+          <h4>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            물리치료사 임상 분석 종합 소견 (Clinical Summary)
+          </h4>
+          <p id="pt-opinion-text">
+            환자 김재활님은 처방된 10회 견관절 외전 운동 중 목표 각도 90°에 도달하는 비율이 90% 이상으로 가동성이 우수하게 유지되었습니다. 
+            다만 각도 80° 이상 거상 시 상부 승모근 개입으로 인한 어깨 거상(Shrugging) 보상작용이 2회 관찰되었으므로, 다음 병원 내원 전까지 견갑골 하강 및 전인 운동(Scapular setting)을 추가 처방하는 것을 권장합니다.
+          </p>
+        </div>
+      </div>
+
+      <div class="report-footer">
+        <button class="secondary-btn" onclick="window.print()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          병원 제출용 인쇄 (Print)
+        </button>
+        <button class="main-workout-btn" style="flex: none; padding: 10px 20px;" onclick="app.closeReportModal()">
+          확인 완료
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       9. 핵심 애플리케이션 자바스크립트 엔진
+       ========================================================================== -->
+  <script>
+    /**
+     * RehabVision AI Main Application Logic
+     */
+    class RehabApplication {
+      constructor() {
+        // 모드 상태: 'webcam' | 'simulation'
+        this.currentMode = 'webcam';
+        this.isWorkingOut = false;
+        this.audioCoachEnabled = true;
+
+        // 선택된 운동 프로토콜
+        this.activeExerciseKey = 'shoulder_abduction';
+        this.exerciseDefs = {
+          shoulder_abduction: {
+            name: '견관절 외전 재활',
+            bodyPart: '우측 어깨/상지',
+            targetRom: 90,
+            holdTime: 3,
+            targetReps: 10,
+            tip: '팔을 올릴 때 어깨(승모근)가 먼저 으쓱 솟아오르는 보상작용이 발생하면 즉시 팔을 멈추고 견갑골을 끌어내리세요.'
+          },
+          chin_tuck: {
+            name: '친 턱 경추 교정',
+            bodyPart: '경추/후두하근',
+            targetRom: 25,
+            holdTime: 5,
+            targetReps: 10,
+            tip: '고개를 아래로 숙이거나 턱을 치켜들지 마시고, 뒤통수를 벽에 수평으로 밀어 넣듯이 턱을 당기세요.'
+          },
+          pelvic_bridge: {
+            name: '골반 둔근 브릿지',
+            bodyPart: '요추/골반/둔근',
+            targetRom: 175,
+            holdTime: 3,
+            targetReps: 10,
+            tip: '허리를 과도하게 꺾지 말고, 엉덩이와 복부에 단단히 힘을 주어 무릎-골반-어깨가 일직선이 되도록 유지하세요.'
+          }
+        };
+
+        // 실시간 세션 데이터
+        this.sessionData = {
+          currentReps: 0,
+          targetReps: 10,
+          currentAngle: 0,
+          targetRom: 90,
+          holdTime: 3,
+          currentHoldTime: 0,
+          maxRomReached: 0,
+          compensationCount: 0,
+          accuracyScore: 100,
+          totalCycles: 0,
+          goodCycles: 0,
+          startTime: null,
+          timerInterval: null
+        };
+
+        // 운동 상태 머신 (0: REST/PREP, 1: MOVING, 2: HOLDING, 3: RETURNING)
+        this.cycleState = 0; 
+        this.holdStartTime = null;
+
+        // 보상작용 플래그
+        this.isCompensating = false;
+        this.compensationCooldown = false;
+        this.lastSpokenMsg = '';
+        this.lastSpeakTime = 0;
+
+        // 시뮬레이션 데모 파라미터
+        this.simAngle = 15;
+        this.simDirection = 1;
+        this.simCompensateActive = false;
+        this.simAnimFrame = null;
+
+        // DOM 엘리먼트 캐싱
+        this.dom = {
+          video: document.getElementById('webcam-video'),
+          canvas: document.getElementById('output-canvas'),
+          ctx: document.getElementById('output-canvas').getContext('2d'),
+          hudState: document.getElementById('hud-exercise-state'),
+          hudDot: document.getElementById('hud-dot'),
+          hudCurrentAngle: document.getElementById('hud-current-angle'),
+          hudTargetRom: document.getElementById('hud-target-rom-val'),
+          hudTargetBodyPart: document.getElementById('hud-target-body-part'),
+          hudHoldBox: document.getElementById('hud-hold-box'),
+          hudHoldVal: document.getElementById('hud-hold-timer-val'),
+          alertBanner: document.getElementById('compensation-alert-banner'),
+          alertBannerText: document.getElementById('alert-banner-text'),
+          startBtn: document.getElementById('start-workout-btn'),
+          startBtnLabel: document.getElementById('start-btn-label'),
+          audioBtn: document.getElementById('audio-toggle-btn'),
+          teleReps: document.getElementById('tele-current-reps'),
+          teleMaxRom: document.getElementById('tele-max-rom'),
+          teleCompCount: document.getElementById('tele-comp-count'),
+          teleSessionTime: document.getElementById('tele-session-time'),
+          repsProgress: document.getElementById('reps-progress-bar'),
+          repsPercent: document.getElementById('reps-percent-text'),
+          accuracyScore: document.getElementById('accuracy-score-text'),
+          accuracyBar: document.getElementById('accuracy-bar'),
+          coachMsg: document.getElementById('coach-bubble-msg'),
+          eventLog: document.getElementById('event-log-container'),
+          simBar: document.getElementById('sim-control-bar'),
+          simCompToggleText: document.getElementById('sim-comp-toggle-text'),
+          statusText: document.getElementById('system-status-text')
+        };
+
+        // Web Audio 합성기
+        this.audioCtx = null;
+
+        // MediaPipe 초기화
+        this.camera = null;
+        this.pose = null;
+      }
+
+      /**
+       * 앱 초기화
+       */
+      async init() {
+        this.logEvent('시스템 초기화 시작...', 'normal');
+        this.setupAudio();
+        this.initCharts();
+        
+        // 초기 운동 설정
+        this.selectExercise('shoulder_abduction');
+
+        // 미디어파이프 설정 시도
+        try {
+          await this.initMediaPipe();
+        } catch (e) {
+          console.warn('웹캠 자동 실행 불가, 시뮬레이션 모드로 전환:', e);
+          this.setMode('simulation');
+        }
+      }
+
+      /**
+       * Web Audio 초기화
+       */
+      setupAudio() {
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.audioCtx = new AudioContext();
+        } catch (e) {
+          console.warn('AudioContext not supported');
+        }
+      }
+
+      playTone(freq, type, duration) {
+        if (!this.audioCoachEnabled || !this.audioCtx) return;
+        try {
+          if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+          }
+          const osc = this.audioCtx.createOscillator();
+          const gain = this.audioCtx.createGain();
+          osc.type = type || 'sine';
+          osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+          gain.gain.setValueAtTime(0.12, this.audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.audioCtx.destination);
+          osc.start();
+          osc.stop(this.audioCtx.currentTime + duration);
+        } catch (err) {}
+      }
+
+      speak(text, priority = false) {
+        if (!this.audioCoachEnabled) return;
+        const now = Date.now();
+        if (!priority && now - this.lastSpeakTime < 3500) return;
+        if (text === this.lastSpokenMsg && now - this.lastSpeakTime < 4500) return;
+
+        this.lastSpokenMsg = text;
+        this.lastSpeakTime = now;
+        this.dom.coachMsg.innerText = text;
+
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'ko-KR';
+          utterance.rate = 1.05;
+          utterance.pitch = 1.0;
+          window.speechSynthesis.speak(utterance);
+        }
+      }
+
+      toggleAudioCoach() {
+        this.audioCoachEnabled = !this.audioCoachEnabled;
+        this.dom.audioBtn.classList.toggle('active', this.audioCoachEnabled);
+        if (this.audioCoachEnabled) {
+          this.speak('음성 코칭이 활성화되었습니다.', true);
+        } else {
+          if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+          this.dom.coachMsg.innerText = '음성 코칭이 음소거되었습니다.';
+        }
+      }
+
+      /**
+       * MediaPipe Pose 초기화
+       */
+      async initMediaPipe() {
+        if (typeof Pose === 'undefined') {
+          throw new Error('MediaPipe Pose script not loaded');
+        }
+
+        this.pose = new Pose({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        });
+
+        this.pose.setOptions({
+          modelComplexity: 1,
+          smoothLandmarks: true,
+          enableSegmentation: false,
+          smoothSegmentation: false,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5
+        });
+
+        this.pose.onResults((results) => this.onPoseResults(results));
+
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          this.camera = new Camera(this.dom.video, {
+            onFrame: async () => {
+              if (this.currentMode === 'webcam') {
+                await this.pose.send({ image: this.dom.video });
+              }
+            },
+            width: 1280,
+            height: 720
+          });
+
+          await this.camera.start();
+          this.dom.statusText.innerText = 'Webcam Vision Active';
+          this.logEvent('웹캠 및 Pose 모델 연결 성공', 'normal');
+        } else {
+          throw new Error('getUserMedia not available');
+        }
+      }
+
+      /**
+       * 모드 전환 (웹캠 vs 시뮬레이션 데모)
+       */
+      setMode(mode) {
+        this.currentMode = mode;
+        const webcamBtn = document.getElementById('mode-webcam-btn');
+        const simBtn = document.getElementById('mode-sim-btn');
+
+        if (mode === 'webcam') {
+          webcamBtn.classList.add('active');
+          simBtn.classList.remove('active');
+          this.dom.simBar.classList.remove('active');
+          this.dom.statusText.innerText = 'Webcam AI Mode';
+          if (this.simAnimFrame) cancelAnimationFrame(this.simAnimFrame);
+          this.logEvent('실시간 웹캠 AI 모드로 전환', 'normal');
+          if (this.camera) this.camera.start();
+        } else {
+          simBtn.classList.add('active');
+          webcamBtn.classList.remove('active');
+          this.dom.simBar.classList.add('active');
+          this.dom.statusText.innerText = 'Virtual Patient Demo';
+          this.logEvent('가상 환자 시뮬레이션 모드 활성화', 'normal');
+          this.startSimulationLoop();
+        }
+      }
+
+      toggleSimCompensation() {
+        this.simCompensateActive = !this.simCompensateActive;
+        this.dom.simCompToggleText.innerText = this.simCompensateActive ? '⚠️ 보상작용 발생 중 (어깨 으쓱임)' : '⚠️ 보상작용 유발 테스트';
+        this.logEvent(`시뮬레이션 보상작용 ${this.simCompensateActive ? '강제 발생' : '해제'}`, this.simCompensateActive ? 'danger' : 'normal');
+      }
+
+      /**
+       * 시뮬레이션 애니메이션 루프
+       */
+      startSimulationLoop() {
+        const renderSim = () => {
+          if (this.currentMode !== 'simulation') return;
+
+          // 각도 가상 변화
+          if (this.isWorkingOut) {
+            if (this.simDirection === 1) {
+              this.simAngle += 0.9;
+              if (this.simAngle >= this.sessionData.targetRom + 4) {
+                this.simDirection = 0; // 홀드 상태
+                setTimeout(() => { this.simDirection = -1; }, (this.sessionData.holdTime * 1000));
+              }
+            } else if (this.simDirection === -1) {
+              this.simAngle -= 1.2;
+              if (this.simAngle <= 15) {
+                this.simAngle = 15;
+                this.simDirection = 1; // 다음 반복
+              }
+            }
+          }
+
+          // 가상 키포인트 생성 및 렌더링
+          this.renderSimulationSkeleton(this.simAngle, this.simCompensateActive);
+
+          this.simAnimFrame = requestAnimationFrame(renderSim);
+        };
+        renderSim();
+      }
+
+      renderSimulationSkeleton(angle, compensate) {
+        const ctx = this.dom.ctx;
+        const w = this.dom.canvas.width;
+        const h = this.dom.canvas.height;
+
+        ctx.save();
+        ctx.fillStyle = '#090f1d';
+        ctx.fillRect(0, 0, w, h);
+
+        // 그리드 패턴
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < w; x += 60) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let y = 0; y < h; y += 60) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+
+        // 기준 인체 좌표 생성
+        const centerX = w / 2;
+        const centerY = h * 0.42;
+
+        const headY = centerY - 140;
+        const neckY = centerY - 70;
+        const leftShoulderX = centerX - 90;
+        const rightShoulderX = centerX + 90;
+        let rightShoulderY = centerY - 70;
+
+        // 보상작용 시 어깨 으쓱임(Elevation) 발생
+        if (compensate) {
+          rightShoulderY -= 35;
+        }
+
+        const leftShoulderY = centerY - 70;
+        const spineY = centerY + 130;
+        const leftHipX = centerX - 60;
+        const rightHipX = centerX + 60;
+
+        // 팔 각도 계산 (Right Arm Abduction)
+        const rad = (angle * Math.PI) / 180;
+        const armLength = 160;
+        const elbowLength = 140;
+
+        const rightElbowX = rightShoulderX + Math.sin(rad) * armLength;
+        const rightElbowY = rightShoulderY + Math.cos(rad) * armLength;
+
+        const rightWristX = rightElbowX + Math.sin(rad) * elbowLength;
+        const rightWristY = rightElbowY + Math.cos(rad) * elbowLength;
+
+        // 골격 렌더링
+        ctx.strokeStyle = compensate ? 'rgba(244, 63, 94, 0.9)' : 'rgba(6, 182, 212, 0.85)';
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // 척추 & 몸통
+        ctx.beginPath();
+        ctx.moveTo(centerX, headY);
+        ctx.lineTo(centerX, neckY);
+        ctx.lineTo(centerX, spineY);
+        ctx.stroke();
+
+        // 어깨 라인
+        ctx.beginPath();
+        ctx.moveTo(leftShoulderX, leftShoulderY);
+        ctx.lineTo(rightShoulderX, rightShoulderY);
+        ctx.stroke();
+
+        // 왼팔 (차려자세)
+        ctx.beginPath();
+        ctx.moveTo(leftShoulderX, leftShoulderY);
+        ctx.lineTo(leftShoulderX, leftShoulderY + 160);
+        ctx.lineTo(leftShoulderX, leftShoulderY + 300);
+        ctx.stroke();
+
+        // 오른팔 (외전 중인 팔)
+        ctx.strokeStyle = compensate ? '#f43f5e' : '#10b981';
+        ctx.beginPath();
+        ctx.moveTo(rightShoulderX, rightShoulderY);
+        ctx.lineTo(rightElbowX, rightElbowY);
+        ctx.lineTo(rightWristX, rightWristY);
+        ctx.stroke();
+
+        // 골반
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.beginPath();
+        ctx.moveTo(leftHipX, spineY);
+        ctx.lineTo(rightHipX, spineY);
+        ctx.stroke();
+
+        // 조인트 원
+        const joints = [
+          [centerX, headY, 28, '#38bdf8'],
+          [leftShoulderX, leftShoulderY, 10, '#38bdf8'],
+          [rightShoulderX, rightShoulderY, 12, compensate ? '#f43f5e' : '#10b981'],
+          [rightElbowX, rightElbowY, 10, '#10b981'],
+          [rightWristX, rightWristY, 8, '#10b981'],
+          [centerX, neckY, 8, '#fff'],
+          [centerX, spineY, 10, '#94a3b8']
+        ];
+
+        joints.forEach(([jx, jy, jr, color]) => {
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(jx, jy, jr, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        });
+
+        // 가동 각도 호(Arc) 및 텍스트 시각화
+        this.drawAngleArc(ctx, rightShoulderX, rightShoulderY, angle, compensate);
+
+        ctx.restore();
+
+        // 텔레메트리 업데이트
+        this.processCalculatedAngle(angle, compensate ? '견갑골 거상(어깨 으쓱임) 보상작용 발생' : null);
+      }
+
+      /**
+       * 각도 호(Arc) 및 HUD 그래픽 드로잉
+       */
+      drawAngleArc(ctx, cx, cy, angle, isCompensating) {
+        ctx.save();
+        const radius = 65;
+        const startRad = Math.PI / 2; // 6 o'clock (down)
+        const endRad = startRad + (angle * Math.PI) / 180;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, startRad, endRad);
+        ctx.strokeStyle = isCompensating ? '#f43f5e' : '#06b6d4';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 각도 수치 표시
+        ctx.fillStyle = isCompensating ? '#fda4af' : '#a5f3fc';
+        ctx.font = 'bold 20px JetBrains Mono';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${Math.round(angle)}°`, cx + 80, cy + 20);
+
+        if (isCompensating) {
+          ctx.fillStyle = '#f43f5e';
+          ctx.font = 'bold 14px Outfit';
+          ctx.fillText('⚠️ 보상작용 경고', cx + 80, cy + 42);
+        }
+
+        ctx.restore();
+      }
+
+      /**
+       * 실시간 MediaPipe 포즈 결과 콜백
+       */
+      onPoseResults(results) {
+        if (this.currentMode !== 'webcam') return;
+
+        const ctx = this.dom.ctx;
+        const w = this.dom.canvas.width;
+        const h = this.dom.canvas.height;
+
+        ctx.save();
+        ctx.clearRect(0, 0, w, h);
+
+        // 웹캠 영상 그리기
+        ctx.drawImage(results.image, 0, 0, w, h);
+
+        if (results.poseLandmarks) {
+          // 운동별 관절 각도 및 보상작용 연산
+          const analysis = this.analyzePose(results.poseLandmarks, w, h);
+
+          // 스켈레톤 라인 & 조인트 그리기
+          this.drawSkeleton(ctx, results.poseLandmarks, w, h, analysis.isCompensating);
+
+          // 각도 호 그리기
+          if (analysis.focusPoint) {
+            this.drawAngleArc(ctx, analysis.focusPoint.x, analysis.focusPoint.y, analysis.angle, analysis.isCompensating);
+          }
+
+          // 파이프라인 처리
+          this.processCalculatedAngle(analysis.angle, analysis.compensationReason);
+        } else {
+          this.dom.hudState.innerText = '카메라 안에 신체가 모두 들어오도록 서주세요.';
+        }
+
+        ctx.restore();
+      }
+
+      /**
+       * 운동별 관절 각도 및 보상작용 벡터 수학 계산
+       */
+      analyzePose(lm, w, h) {
+        let angle = 0;
+        let isCompensating = false;
+        let compensationReason = null;
+        let focusPoint = null;
+
+        // 랜드마크 정규화 좌표 -> 픽셀 변환
+        const pt = (idx) => ({ x: lm[idx].x * w, y: lm[idx].y * h, vis: lm[idx].visibility });
+
+        // 1. 견관절 외전 (Shoulder Abduction)
+        if (this.activeExerciseKey === 'shoulder_abduction') {
+          // 우측 어깨(12), 우측 엉덩이(24), 우측 팔꿈치(14)
+          const shoulder = pt(12);
+          const hip = pt(24);
+          const elbow = pt(14);
+          const leftShoulder = pt(11);
+
+          focusPoint = shoulder;
+
+          // 몸통 벡터(어깨 -> 골반) 와 상완 벡터(어깨 -> 팔꿈치) 간 각도
+          const vTrunk = { x: hip.x - shoulder.x, y: hip.y - shoulder.y };
+          const vArm = { x: elbow.x - shoulder.x, y: elbow.y - shoulder.y };
+          angle = this.calcAngleBetweenVectors(vTrunk, vArm);
+
+          // 보상작용 판별 1: 견갑골 거상(어깨 으쓱임, Trap Shrugging)
+          // 좌우 어깨 Y 높이차이 및 어깨 기울임
+          const shoulderDiffY = leftShoulder.y - shoulder.y; // 오른 어깨가 왼쪽보다 올라가면 양수
+          if (shoulderDiffY > 28 && angle > 35) {
+            isCompensating = true;
+            compensationReason = '어깨가 5도 이상 올라갔습니다! 승모근 힘을 빼세요.';
+          }
+
+          // 보상작용 판별 2: 체간 측방 기울임(Lateral Trunk Lean)
+          const trunkAngleFromVert = Math.abs(Math.atan2(hip.x - shoulder.x, hip.y - shoulder.y) * 180 / Math.PI);
+          if (trunkAngleFromVert > 12) {
+            isCompensating = true;
+            compensationReason = '상체가 옆으로 기울어졌습니다! 몸통을 곧게 펴세요.';
+          }
+        }
+        // 2. 친 턱 경추 교정 (Chin-Tuck)
+        else if (this.activeExerciseKey === 'chin_tuck') {
+          // 코(0), 귀(8:우측 귀), 어깨(12:우측 어깨)
+          const nose = pt(0);
+          const ear = pt(8);
+          const shoulder = pt(12);
+          focusPoint = ear;
+
+          // 경추-흉추 CVA 각도 및 수평 변위
+          const vHoriz = { x: 100, y: 0 };
+          const vEarShoulder = { x: ear.x - shoulder.x, y: ear.y - shoulder.y };
+          angle = Math.abs(90 - this.calcAngleBetweenVectors(vHoriz, vEarShoulder));
+
+          // 턱 과신전(머리 젖힘) 보상작용 감지
+          if (nose.y < ear.y - 15) {
+            isCompensating = true;
+            compensationReason = '턱을 들지 말고, 수평으로 뒤로 당겨주세요!';
+          }
+        }
+        // 3. 골반 둔근 브릿지 (Pelvic Glute Bridge)
+        else if (this.activeExerciseKey === 'pelvic_bridge') {
+          // 어깨(12), 골반(24), 무릎(26)
+          const shoulder = pt(12);
+          const hip = pt(24);
+          const knee = pt(26);
+          focusPoint = hip;
+
+          const vUpper = { x: shoulder.x - hip.x, y: shoulder.y - hip.y };
+          const vThigh = { x: knee.x - hip.x, y: knee.y - hip.y };
+          angle = 180 - this.calcAngleBetweenVectors(vUpper, vThigh);
+
+          // 요추 과신전(허리 꺾임) 보상작용 감지
+          if (angle > 185) {
+            isCompensating = true;
+            compensationReason = '허리를 과도하게 꺾지 마세요! 엉덩이 힘으로 지탱하세요.';
+          }
+        }
+
+        return { angle: Math.max(0, Math.min(180, angle)), isCompensating, compensationReason, focusPoint };
+      }
+
+      calcAngleBetweenVectors(v1, v2) {
+        const dot = v1.x * v2.x + v1.y * v2.y;
+        const mag1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+        const mag2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
+        if (mag1 * mag2 === 0) return 0;
+        const cosVal = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
+        return (Math.acos(cosVal) * 180) / Math.PI;
+      }
+
+      drawSkeleton(ctx, landmarks, w, h, isCompensating) {
+        const connections = [
+          [11, 12], [11, 13], [13, 15], [12, 14], [14, 16], // 팔
+          [11, 23], [12, 24], [23, 24],                      // 몸통
+          [23, 25], [24, 26], [25, 27], [26, 28]            // 다리
+        ];
+
+        ctx.strokeStyle = isCompensating ? 'rgba(244, 63, 94, 0.85)' : 'rgba(6, 182, 212, 0.8)';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+
+        connections.forEach(([i, j]) => {
+          const p1 = landmarks[i];
+          const p2 = landmarks[j];
+          if (p1.visibility > 0.5 && p2.visibility > 0.5) {
+            ctx.beginPath();
+            ctx.moveTo(p1.x * w, p1.y * h);
+            ctx.lineTo(p2.x * w, p2.y * h);
+            ctx.stroke();
+          }
+        });
+
+        // 조인트 그리기
+        landmarks.forEach((p, idx) => {
+          if (p.visibility > 0.5 && idx <= 28) {
+            ctx.fillStyle = isCompensating ? '#f43f5e' : '#10b981';
+            ctx.beginPath();
+            ctx.arc(p.x * w, p.y * h, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
+        });
+      }
+
+      /**
+       * 실시간 각도 판별 & 상태머신 & 음성 코칭 로직
+       */
+      processCalculatedAngle(angle, compensationReason) {
+        this.sessionData.currentAngle = angle;
+        this.dom.hudCurrentAngle.innerText = `${angle.toFixed(1)}°`;
+
+        if (angle > this.sessionData.maxRomReached) {
+          this.sessionData.maxRomReached = angle;
+          this.dom.teleMaxRom.innerText = `${angle.toFixed(1)}°`;
+        }
+
+        if (!this.isWorkingOut) return;
+
+        // 보상작용 처리
+        if (compensationReason) {
+          this.triggerCompensationAlert(compensationReason);
+        } else {
+          this.clearCompensationAlert();
+        }
+
+        const target = this.sessionData.targetRom;
+        const threshold = 6; // 도달 허용 마진
+
+        // 상태머신 처리
+        switch (this.cycleState) {
+          case 0: // 준비 및 가동 시작 (Starting)
+            this.dom.hudState.innerText = '가동 범위까지 천천히 들어 올리세요';
+            this.dom.hudDot.style.background = '#06b6d4';
+            if (angle >= target - threshold) {
+              // 목표 각도 도달 -> 유지(Holding) 단계 진입
+              this.cycleState = 1;
+              this.holdStartTime = Date.now();
+              this.playTone(520, 'sine', 0.15); // 알림 비프
+              this.speak('좋습니다! 그 자세를 유지하세요.');
+            }
+            break;
+
+          case 1: // 자세 유지 (Holding)
+            this.dom.hudDot.style.background = '#10b981';
+            const elapsedSec = (Date.now() - this.holdStartTime) / 1000;
+            const remaining = Math.max(0, this.sessionData.holdTime - elapsedSec);
+            this.dom.hudHoldVal.innerText = `${remaining.toFixed(1)}s`;
+            this.dom.hudState.innerText = `자세 유지 중... (${remaining.toFixed(1)}초)`;
+
+            // 유지 도중 보상작용 없이 목표 범위 이탈 시
+            if (angle < target - 15) {
+              this.cycleState = 0;
+              this.dom.hudHoldVal.innerText = '0.0s';
+              this.speak('각도가 떨어졌습니다. 조금 더 올려주세요.');
+            } else if (elapsedSec >= this.sessionData.holdTime) {
+              // 성공 완료!
+              this.cycleState = 2; // 복귀 단계
+              this.completeRepetition();
+            }
+            break;
+
+          case 2: // 시작 위치로 복귀 (Returning)
+            this.dom.hudState.innerText = '천천히 시작 자세로 내려오세요';
+            this.dom.hudDot.style.background = '#94a3b8';
+            if (angle <= 25) {
+              this.cycleState = 0; // 다음 사이클 준비
+              this.dom.hudHoldVal.innerText = '0.0s';
+            }
+            break;
+        }
+      }
+
+      triggerCompensationAlert(reason) {
+        this.isCompensating = true;
+        this.dom.alertBanner.classList.add('active');
+        this.dom.alertBannerText.innerText = reason;
+        this.dom.hudDot.style.background = '#f43f5e';
+
+        if (!this.compensationCooldown) {
+          this.sessionData.compensationCount++;
+          this.dom.teleCompCount.innerText = `${this.sessionData.compensationCount}회`;
+          this.logEvent(`[보상감지] ${reason}`, 'danger');
+          this.playTone(280, 'sawtooth', 0.35); // 경고음
+          this.speak(reason, true);
+
+          // 정확도 차감
+          this.sessionData.accuracyScore = Math.max(50, this.sessionData.accuracyScore - 3);
+          this.updateAccuracyUI();
+
+          this.compensationCooldown = true;
+          setTimeout(() => { this.compensationCooldown = false; }, 3000);
+        }
+      }
+
+      clearCompensationAlert() {
+        if (this.isCompensating) {
+          this.isCompensating = false;
+          this.dom.alertBanner.classList.remove('active');
+        }
+      }
+
+      completeRepetition() {
+        this.sessionData.currentReps++;
+        this.sessionData.totalCycles++;
+        this.sessionData.goodCycles++;
+
+        this.dom.teleReps.innerHTML = `${this.sessionData.currentReps} <span style="font-size: 0.85rem; color: var(--text-muted);">/ ${this.sessionData.targetReps}</span>`;
+        
+        // 프로그레스 바
+        const pct = Math.min(100, Math.round((this.sessionData.currentReps / this.sessionData.targetReps) * 100));
+        this.dom.repsProgress.style.width = `${pct}%`;
+        this.dom.repsPercent.innerText = `${pct}%`;
+
+        // 사운드 & 음성
+        this.playSuccessChime();
+        this.speak(`${this.sessionData.currentReps}회 완료! 훌륭합니다.`, true);
+        this.logEvent(`[반복완료] ${this.sessionData.currentReps}회 성공 (ROM: ${this.sessionData.currentAngle.toFixed(1)}°)`, 'normal');
+
+        // 목표 세트 완료 판정
+        if (this.sessionData.currentReps >= this.sessionData.targetReps) {
+          this.celebrateSetCompletion();
+        }
+      }
+
+      celebrateSetCompletion() {
+        this.isWorkingOut = false;
+        clearInterval(this.sessionData.timerInterval);
+        this.dom.startBtn.classList.remove('stop');
+        this.dom.startBtnLabel.innerText = '재활 운동 세션 시작';
+
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        }
+
+        this.speak('축하합니다! 처방된 목표 세트를 모두 완수하셨습니다. 재활 리포트를 확인해보세요.', true);
+        this.logEvent('🎉 오늘의 처방 세트 전체 완수!', 'normal');
+        
+        setTimeout(() => {
+          this.openReportModal();
+        }, 1500);
+      }
+
+      playSuccessChime() {
+        this.playTone(523.25, 'triangle', 0.15); // C5
+        setTimeout(() => this.playTone(659.25, 'triangle', 0.2), 120); // E5
+        setTimeout(() => this.playTone(783.99, 'triangle', 0.35), 240); // G5
+      }
+
+      toggleWorkoutSession() {
+        this.isWorkingOut = !this.isWorkingOut;
+
+        if (this.isWorkingOut) {
+          this.dom.startBtn.classList.add('stop');
+          this.dom.startBtnLabel.innerText = '운동 세션 일시 정지';
+          this.dom.hudState.innerText = '시작 자세를 잡고 가동을 시작하세요';
+          this.speak('재활 세션을 시작합니다. 바른 자세를 유지해주세요.');
+          this.logEvent('재활 운동 세션 개시', 'normal');
+
+          if (!this.sessionData.startTime) {
+            this.sessionData.startTime = Date.now();
+          }
+
+          this.sessionData.timerInterval = setInterval(() => {
+            const sec = Math.floor((Date.now() - this.sessionData.startTime) / 1000);
+            const m = String(Math.floor(sec / 60)).padStart(2, '0');
+            const s = String(sec % 60).padStart(2, '0');
+            this.dom.teleSessionTime.innerText = `${m}:${s}`;
+          }, 1000);
+        } else {
+          this.dom.startBtn.classList.remove('stop');
+          this.dom.startBtnLabel.innerText = '운동 세션 재개';
+          this.dom.hudState.innerText = '세션 일시 정지됨';
+          clearInterval(this.sessionData.timerInterval);
+          this.speak('운동 세션이 일시 정지되었습니다.');
+          this.logEvent('운동 세션 일시정지', 'normal');
+        }
+      }
+
+      resetSessionCounter() {
+        this.sessionData.currentReps = 0;
+        this.sessionData.compensationCount = 0;
+        this.sessionData.accuracyScore = 100;
+        this.sessionData.maxRomReached = 0;
+        this.cycleState = 0;
+        this.dom.teleReps.innerHTML = `0 <span style="font-size: 0.85rem; color: var(--text-muted);">/ ${this.sessionData.targetReps}</span>`;
+        this.dom.teleCompCount.innerText = '0회';
+        this.dom.teleMaxRom.innerText = '0.0°';
+        this.dom.repsProgress.style.width = '0%';
+        this.dom.repsPercent.innerText = '0%';
+        this.updateAccuracyUI();
+        this.logEvent('세션 카운터 초기화 완료', 'normal');
+        this.speak('세션 카운트가 초기화되었습니다.');
+      }
+
+      calibrateZero() {
+        this.playTone(600, 'sine', 0.2);
+        this.logEvent('자세 영점(Calibration) 보정 완료', 'normal');
+        this.speak('초기 기준 위치가 정상 보정되었습니다.');
+      }
+
+      selectExercise(key) {
+        this.activeExerciseKey = key;
+        const def = this.exerciseDefs[key];
+
+        // UI 활성화 클래스 전환
+        ['shoulder', 'neck', 'bridge'].forEach(k => {
+          const el = document.getElementById(`ex-card-${k}`);
+          if (el) el.classList.remove('active');
+        });
+
+        if (key === 'shoulder_abduction') document.getElementById('ex-card-shoulder').classList.add('active');
+        if (key === 'chin_tuck') document.getElementById('ex-card-neck').classList.add('active');
+        if (key === 'pelvic_bridge') document.getElementById('ex-card-bridge').classList.add('active');
+
+        // 기본 파라미터 적용
+        this.sessionData.targetRom = def.targetRom;
+        this.sessionData.holdTime = def.holdTime;
+        this.sessionData.targetReps = def.targetReps;
+
+        document.getElementById('target-rom-slider').value = def.targetRom;
+        document.getElementById('target-rom-disp').innerText = `${def.targetRom}°`;
+        document.getElementById('target-reps-slider').value = def.targetReps;
+        document.getElementById('target-reps-disp').innerText = `${def.targetReps}회`;
+        document.getElementById('target-hold-slider').value = def.holdTime;
+        document.getElementById('target-hold-disp').innerText = `${def.holdTime}초`;
+
+        this.dom.hudTargetRom.innerText = `${def.targetRom}°`;
+        this.dom.hudTargetBodyPart.innerText = def.bodyPart;
+        document.getElementById('clinical-tip-box').innerHTML = `<strong>💡 물리치료사 코칭 팁:</strong> ${def.tip}`;
+
+        this.resetSessionCounter();
+        this.logEvent(`[처방변경] ${def.name} 선택`, 'normal');
+        this.speak(`${def.name} 프로토콜이 적용되었습니다.`);
+      }
+
+      updateTargetRom(val) {
+        this.sessionData.targetRom = parseInt(val);
+        document.getElementById('target-rom-disp').innerText = `${val}°`;
+        this.dom.hudTargetRom.innerText = `${val}°`;
+        document.getElementById('tele-target-rom-sub').innerText = `목표 ${val}° 기준`;
+      }
+
+      updateTargetReps(val) {
+        this.sessionData.targetReps = parseInt(val);
+        document.getElementById('target-reps-disp').innerText = `${val}회`;
+        this.dom.teleReps.innerHTML = `${this.sessionData.currentReps} <span style="font-size: 0.85rem; color: var(--text-muted);">/ ${val}</span>`;
+      }
+
+      updateTargetHold(val) {
+        this.sessionData.holdTime = parseInt(val);
+        document.getElementById('target-hold-disp').innerText = `${val}초`;
+      }
+
+      updateAccuracyUI() {
+        this.dom.accuracyScore.innerText = `${this.sessionData.accuracyScore}%`;
+        this.dom.accuracyBar.style.width = `${this.sessionData.accuracyScore}%`;
+      }
+
+      logEvent(msg, type = 'normal') {
+        const item = document.createElement('div');
+        item.className = `log-item ${type === 'danger' ? 'danger' : (type === 'warning' ? 'warning' : '')}`;
+        const timeStr = new Date().toTimeString().split(' ')[0];
+        item.innerHTML = `<span>[${timeStr}] ${msg}</span>`;
+        this.dom.eventLog.prepend(item);
+      }
+
+      /**
+       * 리포트 모달 & Chart.js 렌더링
+       */
+      openReportModal() {
+        document.getElementById('report-modal').classList.add('open');
+        
+        // KPI 업데이트
+        const compliance = Math.round((this.sessionData.currentReps / Math.max(1, this.sessionData.targetReps)) * 100);
+        document.getElementById('rep-kpi-compliance').innerText = `${compliance}%`;
+        document.getElementById('rep-kpi-accuracy').innerText = `${this.sessionData.accuracyScore}%`;
+        document.getElementById('rep-kpi-rom').innerText = `${this.sessionData.maxRomReached.toFixed(1)}°`;
+        document.getElementById('rep-kpi-comp').innerText = `${this.sessionData.compensationCount}회`;
+
+        this.renderCharts();
+      }
+
+      closeReportModal() {
+        document.getElementById('report-modal').classList.remove('open');
+      }
+
+      initCharts() {
+        // 전역 차트 설정
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = 'Inter';
+      }
+
+      renderCharts() {
+        // 1. 회복 추이 차트 (Line Chart)
+        const ctxRom = document.getElementById('rom-recovery-chart').getContext('2d');
+        if (this.romChart) this.romChart.destroy();
+        this.romChart = new Chart(ctxRom, {
+          type: 'line',
+          data: {
+            labels: ['1일차', '2일차', '3일차', '4일차', '5일차', '6일차', '오늘(7일차)'],
+            datasets: [
+              {
+                label: '실제 달성 가동범위(Max ROM)',
+                data: [42, 50, 58, 67, 74, 82, Math.max(88, Math.round(this.sessionData.maxRomReached))],
+                borderColor: '#06b6d4',
+                backgroundColor: 'rgba(6, 182, 212, 0.15)',
+                borderWidth: 3,
+                tension: 0.35,
+                fill: true,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#06b6d4',
+                pointRadius: 5
+              },
+              {
+                label: '처방 목표 기준선',
+                data: [60, 65, 70, 75, 80, 85, this.sessionData.targetRom],
+                borderColor: '#10b981',
+                borderDash: [5, 5],
+                borderWidth: 2,
+                fill: false,
+                pointRadius: 0
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top', labels: { boxWidth: 12 } }
+            },
+            scales: {
+              y: {
+                min: 30,
+                max: 130,
+                grid: { color: 'rgba(255, 255, 255, 0.05)' }
+              },
+              x: {
+                grid: { display: false }
+              }
+            }
+          }
+        });
+
+        // 2. 보상작용 분류 도넛 차트
+        const ctxComp = document.getElementById('comp-distribution-chart').getContext('2d');
+        if (this.compChart) this.compChart.destroy();
+        this.compChart = new Chart(ctxComp, {
+          type: 'doughnut',
+          data: {
+            labels: ['어깨 으쓱임 (Shrugging)', '상체 기울임 (Trunk Lean)', '목 과신전', '정상 자세'],
+            datasets: [{
+              data: [
+                Math.max(1, this.sessionData.compensationCount),
+                1,
+                1,
+                Math.max(5, this.sessionData.goodCycles * 3)
+              ],
+              backgroundColor: ['#f43f5e', '#f59e0b', '#a855f7', '#10b981'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+            }
+          }
+        });
+      }
+    }
+
+    // 인스턴스 전역 생성 및 로드
+    const app = new RehabApplication();
+    window.addEventListener('DOMContentLoaded', () => {
+      app.init();
+    });
+  </script>
+</body>
+</html>
