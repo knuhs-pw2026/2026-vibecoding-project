@@ -1,0 +1,2535 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>문맥과 결 (Context & Flow) - AI 다차원 글 오류 검사기</title>
+  <meta name="description" content="손준혁 학생의 문학/인문학 특화 AI 글 오류 검사기. 맞춤법, 띄어쓰기, 맥락 및 흐름, 어휘 수준을 다차원으로 진단하고 정밀 교정합니다.">
+  
+  <!-- Google Fonts & Pretendard -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  
+  <style>
+/* ===================================================================
+   문맥과 결 (Context & Flow) - Premium Editorial Design System
+   손준혁 학생 프로젝트 - AI 글 다차원 오류 검사기 스타일시트
+   =================================================================== */
+
+:root {
+  --bg-main: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #ffffff;
+  --bg-subtle: #f1f5f9;
+  --bg-hover: #e2e8f0;
+  
+  --border-subtle: #e2e8f0;
+  --border-focus: #6366f1;
+  --border-strong: #cbd5e1;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
+
+  --primary-indigo: #4f46e5;
+  --primary-indigo-light: #6366f1;
+  --primary-indigo-dark: #3730a3;
+  --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  
+  --color-spelling: #ef4444;
+  --bg-spelling-light: #fef2f2;
+  --border-spelling: #fca5a5;
+
+  --color-spacing: #f59e0b;
+  --bg-spacing-light: #fffbeb;
+  --border-spacing: #fcd34d;
+
+  --color-context: #2563eb;
+  --bg-context-light: #eff6ff;
+  --border-context: #93c5fd;
+
+  --color-vocab: #7c3aed;
+  --bg-vocab-light: #f5f3ff;
+  --border-vocab: #c4b5fd;
+
+  --color-success: #10b981;
+  --bg-success-light: #ecfdf5;
+  --border-success: #a7f3d0;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 35px -5px rgba(15, 23, 42, 0.12);
+  --glow-primary: 0 0 20px rgba(99, 102, 241, 0.25);
+
+  --header-height: 70px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  --font-serif: 'Noto Serif KR', Georgia, 'Times New Roman', serif;
+  --font-display: 'Plus Jakarta Sans', var(--font-sans);
+}
+
+body.theme-dark {
+  --bg-main: #0b0f19;
+  --bg-surface: #111827;
+  --bg-surface-elevated: #1a2234;
+  --bg-subtle: #1e293b;
+  --bg-hover: #334155;
+
+  --border-subtle: #243046;
+  --border-focus: #818cf8;
+  --border-strong: #3b4d6e;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --text-inverse: #0f172a;
+
+  --bg-spelling-light: rgba(239, 68, 68, 0.15);
+  --border-spelling: rgba(239, 68, 68, 0.4);
+
+  --bg-spacing-light: rgba(245, 158, 11, 0.15);
+  --border-spacing: rgba(245, 158, 11, 0.4);
+
+  --bg-context-light: rgba(37, 99, 235, 0.18);
+  --border-context: rgba(37, 99, 235, 0.4);
+
+  --bg-vocab-light: rgba(124, 58, 237, 0.18);
+  --border-vocab: rgba(124, 58, 237, 0.4);
+
+  --bg-success-light: rgba(16, 185, 129, 0.15);
+  --border-success: rgba(16, 185, 129, 0.4);
+
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 35px -5px rgba(0, 0, 0, 0.7);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.6;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Navigation Bar */
+.navbar {
+  height: var(--header-height);
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.logo-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  background: var(--primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: var(--glow-primary);
+}
+
+.logo-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(120deg, var(--text-primary) 30%, var(--primary-indigo) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  background: var(--bg-vocab-light);
+  color: var(--primary-indigo);
+  border: 1px solid var(--border-vocab);
+  border-radius: var(--radius-sm);
+}
+
+.brand-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.creator-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.8rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.creator-badge:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
+}
+
+.badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--color-success);
+  box-shadow: 0 0 6px var(--color-success);
+}
+
+.badge-author strong {
+  color: var(--primary-indigo-light);
+}
+
+.badge-dept {
+  color: var(--text-secondary);
+  border-left: 1px solid var(--border-subtle);
+  padding-left: 0.4rem;
+}
+
+.badge-info-icon svg {
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+}
+
+.nav-presets {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.preset-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.preset-label svg {
+  width: 15px;
+  height: 15px;
+  color: var(--primary-indigo);
+}
+
+.preset-buttons {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.btn-preset {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-preset:hover {
+  background: var(--bg-subtle);
+  color: var(--primary-indigo);
+  border-color: var(--primary-indigo-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.btn-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-apply-all {
+  background: var(--primary-gradient);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(79, 70, 229, 0.3);
+}
+
+.btn-apply-all:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-copy, .btn-export {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.btn-copy:hover, .btn-export:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+.btn-icon-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-icon-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-icon-toggle:hover {
+  background: var(--bg-subtle);
+  color: var(--primary-indigo);
+}
+
+body.theme-light .icon-sun { display: none; }
+body.theme-light .icon-moon { display: block; }
+body.theme-dark .icon-sun { display: block; }
+body.theme-dark .icon-moon { display: none; }
+
+/* Main Container Layout */
+.app-container {
+  display: grid;
+  grid-template-columns: 1fr 500px;
+  gap: 1.25rem;
+  flex: 1;
+  padding: 1.25rem 1.5rem;
+  max-width: 1800px;
+  margin: 0 auto;
+  width: 100%;
+  height: calc(100vh - var(--header-height));
+  box-sizing: border-box;
+}
+
+/* Left Workspace: Editor Area */
+.workspace-editor {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.workspace-editor.focus-mode {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  right: 15px;
+  bottom: 15px;
+  z-index: 1000;
+  max-width: none;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Editor Header & Stats */
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.editor-view-tabs {
+  display: flex;
+  background: var(--bg-subtle);
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  gap: 2px;
+}
+
+.btn-view-tab {
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.btn-view-tab.active {
+  background: var(--bg-surface);
+  color: var(--primary-indigo);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-view-tab svg { width: 14px; height: 14px; }
+
+.editor-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.74rem;
+}
+
+.stat-label {
+  color: var(--text-muted);
+}
+
+.stat-val {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-feature-settings: "tnum";
+}
+
+.editor-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.font-toggle-group {
+  display: flex;
+  background: var(--bg-subtle);
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.btn-tool {
+  border: none;
+  background: transparent;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-tool.active {
+  background: var(--bg-surface);
+  color: var(--primary-indigo);
+  box-shadow: var(--shadow-sm);
+}
+
+.font-size-group {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--bg-subtle);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.btn-tool-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-tool-icon:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.btn-tool-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Editor Body - Two Clear Modes (No Ghosting / Overlap) */
+.editor-body {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 1. Direct Textarea Input (Zero-collision mode) */
+#editorInput {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  padding: 1.5rem;
+  font-size: 16px;
+  line-height: 1.85;
+  letter-spacing: -0.01em;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-all;
+  margin: 0;
+  border: none;
+  outline: none;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  resize: none;
+  overflow-y: auto;
+  font-family: inherit;
+  caret-color: var(--primary-indigo);
+}
+
+/* 2. Structured Inline Sentence Annotation View */
+#editorAnnotationView {
+  display: none;
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  gap: 1.25rem;
+  flex-direction: column;
+  background: var(--bg-surface);
+}
+
+.annotation-paragraph-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.annotation-sentence-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.2s ease;
+}
+
+.annotation-sentence-row.has-issue {
+  background: var(--bg-surface);
+  border-left: 4px solid var(--color-context);
+  box-shadow: var(--shadow-sm);
+}
+
+.sentence-original-text {
+  font-size: 1.02rem;
+  line-height: 1.8;
+  color: var(--text-primary);
+  word-break: keep-all;
+}
+
+/* Distinct colored underlines for faulty parts */
+.sentence-original-text .mark-spelling {
+  background-color: var(--bg-spelling-light);
+  border-bottom: 3px solid var(--color-spelling);
+  color: var(--color-spelling);
+  font-weight: 700;
+  padding: 0.1rem 0.25rem;
+  border-radius: 3px;
+}
+
+.sentence-original-text .mark-spacing {
+  background-color: var(--bg-spacing-light);
+  border-bottom: 3px dashed var(--color-spacing);
+  color: #b45309;
+  font-weight: 700;
+  padding: 0.1rem 0.25rem;
+  border-radius: 3px;
+}
+
+.sentence-original-text .mark-context {
+  background-color: var(--bg-context-light);
+  border-bottom: 3px solid var(--color-context);
+  color: var(--color-context);
+  font-weight: 700;
+  padding: 0.1rem 0.25rem;
+  border-radius: 3px;
+}
+
+.sentence-original-text .mark-vocab {
+  background-color: var(--bg-vocab-light);
+  border-bottom: 3px dotted var(--color-vocab);
+  color: var(--color-vocab);
+  font-weight: 700;
+  padding: 0.1rem 0.25rem;
+  border-radius: 3px;
+}
+
+/* Inline Suggested Revised Sentence Block (Generous Spacing, No Overlap) */
+.sentence-revised-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-success-light);
+  border: 1.5px solid var(--border-success);
+  border-radius: var(--radius-sm);
+  margin-top: 0.35rem;
+}
+
+.revised-left-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+}
+
+.revised-badge-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--color-success);
+  text-transform: uppercase;
+}
+
+.revised-badge-title svg { width: 13px; height: 13px; }
+
+.revised-sentence-content {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #065f46;
+  line-height: 1.6;
+}
+
+.btn-apply-sentence-fix {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.85rem;
+  background: var(--color-success);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-apply-sentence-fix:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.btn-apply-sentence-fix svg { width: 13px; height: 13px; }
+
+/* Font Switchers */
+body.font-mode-serif #editorInput,
+body.font-mode-serif #editorAnnotationView,
+body.font-mode-serif .diff-text-view {
+  font-family: var(--font-serif);
+}
+
+body.font-mode-sans #editorInput,
+body.font-mode-sans #editorAnnotationView,
+body.font-mode-sans .diff-text-view {
+  font-family: var(--font-sans);
+}
+
+/* Editor Footer / Legend */
+.editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1.25rem;
+  background: var(--bg-subtle);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+}
+
+.legend-items {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot-spelling { background-color: var(--color-spelling); }
+.dot-spacing { background-color: var(--color-spacing); }
+.dot-context { background-color: var(--color-context); }
+.dot-vocab { background-color: var(--color-vocab); }
+
+.legend-spelling { color: var(--color-spelling); }
+.legend-spacing { color: var(--color-spacing); }
+.legend-context { color: var(--color-context); }
+.legend-vocab { color: var(--color-vocab); }
+
+.live-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.pulse-indicator {
+  width: 6px;
+  height: 6px;
+  background-color: var(--color-success);
+  border-radius: 50%;
+  animation: pulse-dot 1.8s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Right Workspace: Inspector */
+.workspace-inspector {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.inspector-tabs {
+  display: flex;
+  align-items: center;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0.4rem 0.5rem;
+  gap: 0.25rem;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.tab-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.tab-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  background: var(--bg-surface);
+  color: var(--primary-indigo);
+  box-shadow: var(--shadow-sm);
+}
+
+.tab-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-full);
+  line-height: 1;
+}
+
+.badge-spelling { background: var(--bg-spelling-light); color: var(--color-spelling); }
+.badge-spacing { background: var(--bg-spacing-light); color: var(--color-spacing); }
+.badge-context { background: var(--bg-context-light); color: var(--color-context); }
+.badge-vocab { background: var(--bg-vocab-light); color: var(--color-vocab); }
+
+.inspector-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.tab-pane {
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tab-pane.active {
+  display: flex;
+}
+
+.pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.pane-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pane-subtitle {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.btn-card-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.65rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-card-action:hover {
+  background: var(--primary-indigo);
+  color: #fff;
+  border-color: var(--primary-indigo);
+}
+
+.btn-card-action svg {
+  width: 13px;
+  height: 13px;
+}
+
+.card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.score-hero-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: linear-gradient(135deg, var(--bg-surface-elevated) 0%, var(--bg-subtle) 100%);
+  border-left: 4px solid var(--primary-indigo);
+}
+
+.score-circle-wrapper {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0;
+}
+
+.score-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.score-ring-bg {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 8;
+}
+
+.score-ring-progress {
+  fill: none;
+  stroke: var(--primary-indigo);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 314;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.3s ease;
+}
+
+.score-text-group {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.score-number {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.score-unit {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.score-details {
+  flex: 1;
+}
+
+.score-grade-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-success-light);
+  color: var(--color-success);
+  margin-bottom: 0.3rem;
+}
+
+.score-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.score-desc {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.metric-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.metric-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.metric-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.metric-icon svg { width: 13px; height: 13px; }
+
+.metric-icon.icon-spelling { background: var(--bg-spelling-light); color: var(--color-spelling); }
+.metric-icon.icon-spacing { background: var(--bg-spacing-light); color: var(--color-spacing); }
+.metric-icon.icon-context { background: var(--bg-context-light); color: var(--color-context); }
+.metric-icon.icon-vocab { background: var(--bg-vocab-light); color: var(--color-vocab); }
+
+.metric-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.metric-val-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.metric-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-feature-settings: "tnum";
+}
+
+.metric-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.metric-bar {
+  height: 4px;
+  background: var(--bg-subtle);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.metric-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.fill-spelling { background: var(--color-spelling); }
+.fill-spacing { background: var(--color-spacing); }
+.fill-context { background: var(--color-context); }
+.fill-vocab { background: var(--color-vocab); }
+
+.editorial-review-card {
+  border-left: 3px solid var(--color-vocab);
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.review-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-vocab);
+}
+
+.review-title svg { width: 14px; height: 14px; }
+
+.review-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: var(--bg-vocab-light);
+  color: var(--color-vocab);
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-sm);
+}
+
+.review-body {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.overview-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.btn-overview-action {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-overview-action:hover {
+  background: var(--bg-surface);
+  border-color: var(--primary-indigo-light);
+  color: var(--primary-indigo);
+  transform: translateX(3px);
+}
+
+.btn-overview-action svg {
+  width: 15px;
+  height: 15px;
+}
+
+.issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.empty-issue-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.empty-icon svg {
+  width: 32px;
+  height: 32px;
+}
+.empty-icon.text-green svg { color: var(--color-success); stroke: var(--color-success); }
+.empty-icon.text-purple svg { color: var(--color-vocab); stroke: var(--color-vocab); }
+
+/* Spaciously Designed Issue Card (No Text Collision) */
+.issue-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.issue-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.issue-card.type-spelling { border-left: 4px solid var(--color-spelling); }
+.issue-card.type-spacing { border-left: 4px solid var(--color-spacing); }
+.issue-card.type-context { border-left: 4px solid var(--color-context); }
+.issue-card.type-vocab { border-left: 4px solid var(--color-vocab); }
+
+.issue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.issue-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.issue-tag.tag-spelling { background: var(--bg-spelling-light); color: var(--color-spelling); }
+.issue-tag.tag-spacing { background: var(--bg-spacing-light); color: var(--color-spacing); }
+.issue-tag.tag-context { background: var(--bg-context-light); color: var(--color-context); }
+.issue-tag.tag-vocab { background: var(--bg-vocab-light); color: var(--color-vocab); }
+
+/* Separated Comparison Box with Clean Line Spacing */
+.issue-compare-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--bg-subtle);
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-sm);
+}
+
+.compare-row-orig {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.compare-row-orig .badge-lbl {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  background: var(--bg-spelling-light);
+  color: var(--color-spelling);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.compare-row-orig .text-val {
+  color: var(--text-primary);
+  text-decoration: underline wavy var(--color-spelling);
+  font-weight: 600;
+}
+
+.compare-arrow-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding-left: 0.5rem;
+}
+
+.compare-arrow-divider svg { width: 12px; height: 12px; }
+
+.compare-row-fixed {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.compare-row-fixed .badge-lbl {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  background: var(--bg-success-light);
+  color: var(--color-success);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.compare-row-fixed .text-val {
+  color: #059669;
+  font-weight: 700;
+}
+
+.issue-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  background: var(--bg-surface);
+  padding: 0.5rem 0.6rem;
+  border-radius: 4px;
+  border-left: 2px solid var(--border-strong);
+}
+
+.issue-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.btn-issue-apply {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.85rem;
+  background: var(--primary-indigo);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-issue-apply:hover {
+  background: var(--primary-indigo-dark);
+}
+
+.btn-issue-apply svg { width: 13px; height: 13px; }
+
+.btn-issue-dismiss {
+  padding: 0.4rem 0.65rem;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.btn-issue-dismiss:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+/* Diff View Tab */
+.diff-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 400px;
+}
+
+.diff-column {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.diff-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.9rem;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.diff-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+}
+
+.badge-original { background: var(--bg-spelling-light); color: var(--color-spelling); }
+.badge-fixed { background: var(--bg-success-light); color: var(--color-success); }
+
+.diff-len {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.diff-text-view {
+  flex: 1;
+  padding: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-y: auto;
+  color: var(--text-primary);
+}
+
+.diff-highlight-del {
+  background: var(--bg-spelling-light);
+  color: var(--color-spelling);
+  text-decoration: line-through;
+  padding: 0.1rem 0.2rem;
+  border-radius: 2px;
+}
+
+.diff-highlight-add {
+  background: var(--bg-success-light);
+  color: var(--color-success);
+  font-weight: 600;
+  padding: 0.1rem 0.2rem;
+  border-radius: 2px;
+}
+
+/* Praise & Highlights Styles */
+.praise-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.praise-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  border-left: 4px solid #8b5cf6;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.praise-card:hover {
+  border-color: #c4b5fd;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.praise-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.praise-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+}
+
+.praise-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+.badge-praise-intellect { background: #ede9fe; color: #6d28d9; }
+.badge-praise-insight { background: #e0f2fe; color: #0369a1; }
+.badge-praise-logic { background: #dcfce7; color: #15803d; }
+.badge-praise-clarity { background: #fef3c7; color: #b45309; }
+
+.badge-praise { background: #ede9fe; color: #6d28d9; }
+
+.praise-score-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #8b5cf6;
+  background: var(--bg-vocab-light);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+}
+
+.praise-quote-box {
+  display: flex;
+  gap: 0.6rem;
+  background: var(--bg-subtle);
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid #8b5cf6;
+}
+
+.quote-mark {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #8b5cf6;
+  font-weight: 800;
+}
+
+.quote-text {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--text-primary);
+  font-weight: 600;
+  word-break: keep-all;
+}
+
+.praise-feedback-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: var(--bg-surface-elevated);
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.feedback-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.feedback-title svg {
+  width: 14px;
+  height: 14px;
+}
+
+.feedback-desc {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.feedback-tip {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  padding: 0.35rem 0.6rem;
+  border-radius: 4px;
+}
+
+.btn-praise-action {
+  border-color: #c4b5fd !important;
+  color: #7c3aed !important;
+  background: #f5f3ff !important;
+}
+
+.btn-praise-action:hover {
+  background: #ede9fe !important;
+  color: #6d28d9 !important;
+}
+
+/* Awkward Flow & Weakness Styles */
+.awkward-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.awkward-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  border-left: 4px solid #f59e0b;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.awkward-card:hover {
+  border-color: #fcd34d;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.awkward-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.awkward-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+}
+
+.awkward-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+.badge-awkward-runon { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
+.badge-awkward-passive { background: #fef2f2; color: #b91c1c; border: 1px solid #fee2e2; }
+.badge-awkward-agree { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+.badge-awkward-cliche { background: #fdf4ff; color: #a21caf; border: 1px solid #fae8ff; }
+.badge-awkward-trans { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
+.badge-awkward-ending { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+
+.badge-awkward { background: #fffbeb; color: #d97706; }
+
+.awkward-level-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #d97706;
+  background: var(--bg-spacing-light);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+}
+
+.awkward-quote-box {
+  display: flex;
+  gap: 0.6rem;
+  background: var(--bg-subtle);
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid #f59e0b;
+}
+
+.awkward-quote-mark {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #f59e0b;
+  font-weight: 800;
+}
+
+.awkward-quote-text {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--text-primary);
+  font-weight: 600;
+  word-break: keep-all;
+}
+
+.awkward-problem-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: var(--bg-surface-elevated);
+  padding: 0.75rem 0.95rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.awkward-title-why {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #d97706;
+}
+
+.awkward-title-why svg {
+  width: 14px;
+  height: 14px;
+}
+
+.awkward-problem-desc {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.awkward-solution-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: var(--bg-success-light);
+  padding: 0.75rem 0.95rem;
+  border: 1px solid var(--border-success);
+  border-radius: var(--radius-sm);
+}
+
+.awkward-title-how {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.awkward-title-how svg {
+  width: 14px;
+  height: 14px;
+}
+
+.awkward-solution-desc {
+  font-size: 0.84rem;
+  color: #065f46;
+  line-height: 1.55;
+}
+
+.sentence-awkward-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.65rem 0.9rem;
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: var(--radius-sm);
+  margin-top: 0.35rem;
+}
+
+body.theme-dark .sentence-awkward-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.sentence-awkward-banner .awkward-badge-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #d97706;
+}
+
+.sentence-awkward-banner .awkward-desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.sentence-awkward-banner .awkward-sol {
+  font-size: 0.8rem;
+  color: #065f46;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+}
+
+.btn-awkward-action {
+  border-color: #fcd34d !important;
+  color: #d97706 !important;
+  background: #fffbeb !important;
+}
+
+.btn-awkward-action:hover {
+  background: #fef3c7 !important;
+  color: #b45309 !important;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.modal-overlay.active {
+  display: flex;
+  animation: modal-fade-in 0.25s ease forwards;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  max-width: 650px;
+  width: 100%;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1.5rem 1.75rem 1rem 1.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.modal-category {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary-indigo);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-top: 0.2rem;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 1.5rem 1.75rem;
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-item.full-width {
+  grid-column: span 2;
+}
+
+.info-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.info-value {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  line-height: 1.55;
+}
+
+.highlight-val {
+  font-weight: 800;
+  color: var(--primary-indigo);
+  font-size: 1rem;
+}
+
+.features-pill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.feat-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--bg-subtle);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-left: 3px solid var(--primary-indigo);
+}
+
+.feat-pill svg {
+  width: 14px;
+  height: 14px;
+  color: var(--primary-indigo);
+}
+
+.modal-footer {
+  padding: 1rem 1.75rem 1.5rem 1.75rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-primary {
+  padding: 0.65rem 1.4rem;
+  background: var(--primary-gradient);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.45);
+  transform: translateY(-1px);
+}
+
+.toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 3000;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-lg);
+  padding: 0.75rem 1.1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  animation: toast-slide-in 0.25s ease forwards;
+  pointer-events: auto;
+}
+
+.toast.toast-success { border-left: 4px solid var(--color-success); }
+.toast.toast-info { border-left: 4px solid var(--primary-indigo); }
+
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1100px) {
+  .app-container {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow-y: visible;
+  }
+  .workspace-editor { height: 520px; }
+  .workspace-inspector { height: 600px; }
+  .nav-presets { display: none; }
+}
+
+@media (max-width: 768px) {
+  .navbar { padding: 0 1rem; }
+  .brand-subtitle, .badge-dept, .nav-presets { display: none; }
+  .app-container { padding: 0.75rem; }
+  .metric-cards-grid { grid-template-columns: 1fr; }
+  .diff-container { grid-template-columns: 1fr; }
+}
+  </style>
+</head>
+<body class="theme-light font-mode-sans">
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-left">
+      <div class="brand-logo">
+        <div class="logo-icon">
+          <i data-lucide="feather"></i>
+        </div>
+        <div class="brand-text">
+          <div class="title-row">
+            <span class="brand-name">문맥과 결</span>
+            <span class="brand-tag">v2.0 PRO</span>
+          </div>
+          <p class="brand-subtitle">AI 다차원 글 오류 검사 & 문맥 교정 솔루션</p>
+        </div>
+      </div>
+
+      <div class="creator-badge" id="creatorBadgeBtn" title="기획서 및 프로젝트 정보 보기">
+        <span class="badge-dot"></span>
+        <span class="badge-author">기획: <strong>손준혁</strong></span>
+        <span class="badge-dept">문학 · 인문학</span>
+        <i data-lucide="info" class="badge-info-icon"></i>
+      </div>
+    </div>
+
+    <!-- Quick Preset Selector -->
+    <div class="nav-presets">
+      <span class="preset-label"><i data-lucide="sparkles"></i> 예시 불러오기:</span>
+      <div class="preset-buttons">
+        <button class="btn-preset" data-sample="essay" title="오류가 포함된 인문학 에세이 예시">인문학 에세이</button>
+        <button class="btn-preset" data-sample="critique" title="오류가 포함된 문학 비평 예시">문학 서평/비평</button>
+        <button class="btn-preset" data-sample="report" title="오류가 포함된 학술 과제 리포트 예시">학술 과제문</button>
+      </div>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="nav-right">
+      <button class="btn-action btn-apply-all" id="applyAllBtn" title="발견된 모든 오류를 한 번에 교정합니다">
+        <i data-lucide="check-check"></i>
+        <span>전체 교정 적용</span>
+      </button>
+
+      <button class="btn-action btn-copy" id="copyResultBtn" title="교정된 글을 클립보드에 복사">
+        <i data-lucide="copy"></i>
+        <span>결과 복사</span>
+      </button>
+
+      <button class="btn-action btn-export" id="exportReportBtn" title="종합 분석 진단서 다운로드">
+        <i data-lucide="file-down"></i>
+        <span>진단서 출력</span>
+      </button>
+
+      <button class="btn-icon-toggle" id="themeToggleBtn" title="다크/라이트 모드 전환">
+        <i data-lucide="moon" class="icon-moon"></i>
+        <i data-lucide="sun" class="icon-sun"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-container">
+    <!-- Left Workspace: Editor Area -->
+    <section class="workspace-editor">
+      <!-- Editor Toolbar & Metrics Bar -->
+      <div class="editor-header">
+        <!-- View Switcher: Direct Input vs Sentence-by-Sentence View -->
+        <div class="editor-view-tabs">
+          <button class="btn-view-tab active" id="viewModeTextBtn" title="원문 텍스트 직접 입력 및 편집">
+            <i data-lucide="edit-3"></i>
+            <span>글 작성/편집</span>
+          </button>
+          <button class="btn-view-tab" id="viewModeAnnotationBtn" title="문장별 밑줄 및 수정안 인라인 뷰">
+            <i data-lucide="list-checks"></i>
+            <span>문장별 교정 뷰</span>
+          </button>
+        </div>
+
+        <div class="editor-stats">
+          <div class="stat-pill" title="공백 포함 글자 수">
+            <span class="stat-label">글자수</span>
+            <strong class="stat-val" id="charCount">0</strong>
+          </div>
+          <div class="stat-pill" title="단어 수">
+            <span class="stat-label">단어</span>
+            <strong class="stat-val" id="wordCount">0</strong>
+          </div>
+          <div class="stat-pill" title="문장 수">
+            <span class="stat-label">문장</span>
+            <strong class="stat-val" id="sentenceCount">0</strong>
+          </div>
+          <div class="stat-pill" title="예상 낭독 시간">
+            <span class="stat-label">낭독</span>
+            <strong class="stat-val" id="readingTime">0초</strong>
+          </div>
+        </div>
+
+        <div class="editor-controls">
+          <div class="font-toggle-group">
+            <button class="btn-tool active" id="fontSansBtn" title="고딕(Pretendard) 서체">고딕</button>
+            <button class="btn-tool" id="fontSerifBtn" title="명조(Noto Serif KR) 문학 서체">명조</button>
+          </div>
+
+          <div class="font-size-group">
+            <button class="btn-tool-icon" id="decreaseFontBtn" title="글자 크기 축소"><i data-lucide="minus"></i></button>
+            <span id="fontSizeDisplay">16px</span>
+            <button class="btn-tool-icon" id="increaseFontBtn" title="글자 크기 확대"><i data-lucide="plus"></i></button>
+          </div>
+
+          <button class="btn-tool-icon" id="clearTextBtn" title="내용 모두 지우기">
+            <i data-lucide="trash-2"></i>
+          </button>
+
+          <button class="btn-tool-icon" id="focusModeBtn" title="집중 글쓰기 모드">
+            <i data-lucide="maximize-2"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Interactive Editor Canvas (100% Zero-Ghosting) -->
+      <div class="editor-body">
+        <!-- 1. Textarea Editor Mode -->
+        <textarea 
+          id="editorInput" 
+          placeholder="여기에 글을 입력하거나 붙여넣으세요... 맞춤법, 띄어쓰기, 맥락의 비문 및 만연체, 어휘 수준을 실시간으로 다차원 분석합니다. 상단의 '예시 불러오기' 버튼을 눌러 바로 체험해보실 수 있습니다."
+          spellcheck="false"
+        ></textarea>
+
+        <!-- 2. Sentence-by-Sentence Clean Annotation View (No text collision!) -->
+        <div id="editorAnnotationView"></div>
+      </div>
+
+      <!-- Quick Issue Legend / Status Footer -->
+      <div class="editor-footer">
+        <div class="legend-items">
+          <span class="legend-item legend-spelling">
+            <span class="legend-dot dot-spelling"></span> 맞춤법 오류 (<span id="countSpellingBadge">0</span>)
+          </span>
+          <span class="legend-item legend-spacing">
+            <span class="legend-dot dot-spacing"></span> 띄어쓰기 교정 (<span id="countSpacingBadge">0</span>)
+          </span>
+          <span class="legend-item legend-context">
+            <span class="legend-dot dot-context"></span> 맥락/비문/만연체 (<span id="countContextBadge">0</span>)
+          </span>
+          <span class="legend-item legend-vocab">
+            <span class="legend-dot dot-vocab"></span> 어휘 세련미 제안 (<span id="countVocabBadge">0</span>)
+          </span>
+        </div>
+        <div class="live-status-indicator">
+          <span class="pulse-indicator"></span>
+          <span id="analysisStatusText">실시간 정밀 진단 중</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Workspace: Diagnostics & Multidimensional Inspection Panel -->
+    <section class="workspace-inspector">
+      <!-- Tabs Navigation -->
+      <div class="inspector-tabs">
+        <button class="tab-btn active" data-tab="tab-overview">
+          <i data-lucide="gauge"></i>
+          <span>종합 진단</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-praise">
+          <i data-lucide="star"></i>
+          <span>잘 쓴 부분 & 피드백</span>
+          <span class="tab-badge badge-praise" id="tabPraiseCount">0</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-awkward">
+          <i data-lucide="alert-triangle"></i>
+          <span>어색한 부분 & 피드백</span>
+          <span class="tab-badge badge-awkward" id="tabAwkwardCount">0</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-spelling">
+          <i data-lucide="spell-check"></i>
+          <span>맞춤법</span>
+          <span class="tab-badge badge-spelling" id="tabSpellingCount">0</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-spacing">
+          <i data-lucide="space"></i>
+          <span>띄어쓰기</span>
+          <span class="tab-badge badge-spacing" id="tabSpacingCount">0</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-context">
+          <i data-lucide="git-branch"></i>
+          <span>맥락 & 흐름</span>
+          <span class="tab-badge badge-context" id="tabContextCount">0</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-vocab">
+          <i data-lucide="book-open"></i>
+          <span>어휘 수준</span>
+          <span class="tab-badge badge-vocab" id="tabVocabCount">0</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-diff">
+          <i data-lucide="split-square-vertical"></i>
+          <span>비교 뷰</span>
+        </button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="inspector-content">
+        
+        <!-- [TAB 1] 종합 진단 대시보드 -->
+        <div class="tab-pane active" id="tab-overview">
+          <div class="card score-hero-card">
+            <div class="score-circle-wrapper">
+              <svg class="score-ring" viewBox="0 0 120 120">
+                <circle class="score-ring-bg" cx="60" cy="60" r="50"></circle>
+                <circle class="score-ring-progress" id="scoreRingProgress" cx="60" cy="60" r="50"></circle>
+              </svg>
+              <div class="score-text-group">
+                <span class="score-number" id="overallScoreVal">100</span>
+                <span class="score-unit">/ 100점</span>
+              </div>
+            </div>
+            <div class="score-details">
+              <div class="score-grade-badge" id="scoreGradeBadge">최우수 완성도</div>
+              <h3 class="score-title" id="scoreSummaryTitle">글의 상태가 매우 안정적입니다</h3>
+              <p class="score-desc" id="scoreSummaryDesc">글을 입력하면 맞춤법, 띄어쓰기, 문맥 연결성 및 어휘 수준을 종합 평가하여 점수를 산출합니다.</p>
+            </div>
+          </div>
+
+          <div class="metric-cards-grid">
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-icon icon-spelling"><i data-lucide="check-circle-2"></i></span>
+                <span class="metric-name">맞춤법 정확도</span>
+              </div>
+              <div class="metric-val-row">
+                <strong class="metric-val" id="metricSpellingScore">100%</strong>
+                <span class="metric-sub" id="metricSpellingCount">오류 0건</span>
+              </div>
+              <div class="metric-bar"><div class="metric-bar-fill fill-spelling" id="metricSpellingBar" style="width: 100%"></div></div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-icon icon-spacing"><i data-lucide="align-left"></i></span>
+                <span class="metric-name">띄어쓰기 정밀도</span>
+              </div>
+              <div class="metric-val-row">
+                <strong class="metric-val" id="metricSpacingScore">100%</strong>
+                <span class="metric-sub" id="metricSpacingCount">오류 0건</span>
+              </div>
+              <div class="metric-bar"><div class="metric-bar-fill fill-spacing" id="metricSpacingBar" style="width: 100%"></div></div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-icon icon-context"><i data-lucide="git-commit"></i></span>
+                <span class="metric-name">문맥 흐름 & 가독성</span>
+              </div>
+              <div class="metric-val-row">
+                <strong class="metric-val" id="metricContextScore">100%</strong>
+                <span class="metric-sub" id="metricContextCount">비문·만연체 0건</span>
+              </div>
+              <div class="metric-bar"><div class="metric-bar-fill fill-context" id="metricContextBar" style="width: 100%"></div></div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-icon icon-vocab"><i data-lucide="graduation-cap"></i></span>
+                <span class="metric-name">어휘 풍부도 & 품격</span>
+              </div>
+              <div class="metric-val-row">
+                <strong class="metric-val" id="metricVocabScore">보통</strong>
+                <span class="metric-sub" id="metricVocabTTR">TTR: 0%</span>
+              </div>
+              <div class="metric-bar"><div class="metric-bar-fill fill-vocab" id="metricVocabBar" style="width: 70%"></div></div>
+            </div>
+          </div>
+
+          <div class="card editorial-review-card">
+            <div class="review-header">
+              <div class="review-title">
+                <i data-lucide="sparkle"></i>
+                <span>문학 · 인문학 관점 AI 총평 및 조언</span>
+              </div>
+              <span class="review-tag">심층 분석</span>
+            </div>
+            <div class="review-body" id="editorialReviewText">
+              글을 작성하거나 상단의 예시 글을 선택하면, 인문학적 어조와 문맥의 결을 살린 맞춤형 심층 조언이 생성됩니다.
+            </div>
+          </div>
+
+          <div class="overview-quick-actions">
+            <button class="btn-overview-action btn-praise-action" id="btnJumpToPraise">
+              <i data-lucide="star"></i> 🌟 잘 쓰여진 부분 & 찬사 확인 (<span id="jumpPraiseCount">0</span>)
+            </button>
+            <button class="btn-overview-action btn-awkward-action" id="btnJumpToAwkward">
+              <i data-lucide="alert-triangle"></i> ⚠️ 어색한 문맥 피드백 확인 (<span id="jumpAwkwardCount">0</span>)
+            </button>
+            <button class="btn-overview-action" id="btnJumpToSpelling">
+              <i data-lucide="spell-check"></i> 맞춤법 교정 바로가기 (<span id="jumpSpellingCount">0</span>)
+            </button>
+            <button class="btn-overview-action" id="btnJumpToSpacing">
+              <i data-lucide="space"></i> 띄어쓰기 교정 바로가기 (<span id="jumpSpacingCount">0</span>)
+            </button>
+            <button class="btn-overview-action" id="btnJumpToContext">
+              <i data-lucide="git-branch"></i> 맥락 개선 바로가기 (<span id="jumpContextCount">0</span>)
+            </button>
+          </div>
+        </div>
+
+        <!-- [TAB 2] 맞춤법 검사 -->
+        <div class="tab-pane" id="tab-spelling">
+          <div class="pane-header">
+            <div>
+              <h3 class="pane-title">맞춤법 & 철자 오류 진단</h3>
+              <p class="pane-subtitle">국립국어원 표준어 규정 및 빈출 오탈자 규칙 기반의 정밀 교정</p>
+            </div>
+            <button class="btn-card-action" id="applyAllSpellingBtn">
+              <i data-lucide="check"></i> 맞춤법 모두 적용
+            </button>
+          </div>
+          <div class="issues-list" id="spellingIssuesList">
+            <div class="empty-issue-state">
+              <i data-lucide="check-circle" class="empty-icon text-green"></i>
+              <p>맞춤법 오류가 발견되지 않았습니다.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- [TAB 3] 띄어쓰기 검사 -->
+        <div class="tab-pane" id="tab-spacing">
+          <div class="pane-header">
+            <div>
+              <h3 class="pane-title">띄어쓰기 정밀 교정</h3>
+              <p class="pane-subtitle">의존명사, 조사, 보조용언, 복합어 등 띄어쓰기 규범 진단</p>
+            </div>
+            <button class="btn-card-action" id="applyAllSpacingBtn">
+              <i data-lucide="check"></i> 띄어쓰기 모두 적용
+            </button>
+          </div>
+          <div class="issues-list" id="spacingIssuesList">
+            <div class="empty-issue-state">
+              <i data-lucide="check-circle" class="empty-icon text-green"></i>
+              <p>띄어쓰기 오류가 발견되지 않았습니다.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- [TAB 4] 맥락, 흐름 & 비문 검사 -->
+        <div class="tab-pane" id="tab-context">
+          <div class="pane-header">
+            <div>
+              <h3 class="pane-title">맥락, 비문 & 문장 흐름</h3>
+              <p class="pane-subtitle">주어-서술어 호응, 이중피동, 번역투 표현 및 만연체 분절 제안</p>
+            </div>
+            <button class="btn-card-action" id="applyAllContextBtn">
+              <i data-lucide="check"></i> 맥락 개선 모두 적용
+            </button>
+          </div>
+          <div class="issues-list" id="contextIssuesList">
+            <div class="empty-issue-state">
+              <i data-lucide="check-circle" class="empty-icon text-green"></i>
+              <p>맥락이나 문장 흐름상의 큰 결함이 발견되지 않았습니다.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- [TAB 5] 어휘 수준 & 인문학적 세련미 제안 -->
+        <div class="tab-pane" id="tab-vocab">
+          <div class="pane-header">
+            <div>
+              <h3 class="pane-title">어휘 수준 분석 및 고급 유의어 추천</h3>
+              <p class="pane-subtitle">상투적이거나 일상적인 표현을 인문학적·학술적 격조를 갖춘 어휘로 제안합니다</p>
+            </div>
+          </div>
+
+          <div class="card vocab-distribution-card">
+            <h4 class="card-subtitle">어휘 난이도별 분포</h4>
+            <div class="vocab-bars-group">
+              <div class="vocab-bar-item">
+                <div class="vocab-bar-label">
+                  <span>기초/일상 어휘</span>
+                  <strong id="vocabBasicPct">0%</strong>
+                </div>
+                <div class="vocab-progress-track"><div class="vocab-progress-bar bg-basic" id="vocabBasicBar" style="width: 0%"></div></div>
+              </div>
+              <div class="vocab-bar-item">
+                <div class="vocab-bar-label">
+                  <span>중급/일반 어휘</span>
+                  <strong id="vocabInterPct">0%</strong>
+                </div>
+                <div class="vocab-progress-track"><div class="vocab-progress-bar bg-inter" id="vocabInterBar" style="width: 0%"></div></div>
+              </div>
+              <div class="vocab-bar-item">
+                <div class="vocab-bar-label">
+                  <span>심화/인문·학술 어휘</span>
+                  <strong id="vocabAdvPct">0%</strong>
+                </div>
+                <div class="vocab-progress-track"><div class="vocab-progress-bar bg-adv" id="vocabAdvBar" style="width: 0%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="issues-list" id="vocabIssuesList">
+            <div class="empty-issue-state">
+              <i data-lucide="sparkles" class="empty-icon text-purple"></i>
+              <p>추천할 어휘 제안 사항이 없습니다.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- [TAB] 잘 쓰여진 부분 & 찬사 피드백 -->
+        <div class="tab-pane" id="tab-praise">
+          <div class="pane-header">
+            <div>
+              <h3 class="pane-title">잘 쓰여진 우수 문장 & AI 찬사 피드백</h3>
+              <p class="pane-subtitle">인문학적 사유, 날카로운 문제의식, 명쾌한 문체 등 글의 뛰어난 강점을 분석합니다</p>
+            </div>
+          </div>
+          <div class="praise-cards-container" id="praiseCardsContainer">
+            <div class="empty-issue-state">
+              <i data-lucide="star" class="empty-icon text-purple"></i>
+              <p>글을 작성하시면 돋보이는 문장과 칭찬 피드백이 생성됩니다.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- [TAB] 어색한 부분 & 문맥·흐름 피드백 -->
+        <div class="tab-pane" id="tab-awkward">
+          <div class="pane-header">
+            <div>
+              <h3 class="pane-title">어색한 문장 & 문맥·흐름 취약점 진단</h3>
+              <p class="pane-subtitle">만연체(호흡 과다), 주술 불호응, 이중피동, 번역투 및 상투적 표현 등 글의 흐름을 해치는 취약점을 진단합니다</p>
+            </div>
+          </div>
+          <div class="awkward-cards-container" id="awkwardCardsContainer">
+            <div class="empty-issue-state">
+              <i data-lucide="check-circle" class="empty-icon text-green"></i>
+              <p>문맥이나 흐름상 어색한 문장이 발견되지 않았습니다.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- [TAB 6] 비교 뷰 (Diff View) -->
+        <div class="tab-pane" id="tab-diff">
+          <div class="pane-header">
+            <div>
+              <h3 class="pane-title">원문 vs 전체 교정본 대조</h3>
+              <p class="pane-subtitle">모든 오류를 교정한 결과물과 원문을 실시간으로 나란히 비교합니다</p>
+            </div>
+            <button class="btn-card-action" id="copyDiffResultBtn">
+              <i data-lucide="copy"></i> 교정본 복사
+            </button>
+          </div>
+
+          <div class="diff-container">
+            <div class="diff-column">
+              <div class="diff-col-header">
+                <span class="diff-badge badge-original">원문 (오류 포함)</span>
+                <span class="diff-len" id="diffOrigLen">0자</span>
+              </div>
+              <div class="diff-text-view original-view" id="diffOriginalText"></div>
+            </div>
+
+            <div class="diff-column">
+              <div class="diff-col-header">
+                <span class="diff-badge badge-fixed">최종 교정본 (완성)</span>
+                <span class="diff-len" id="diffFixedLen">0자</span>
+              </div>
+              <div class="diff-text-view fixed-view" id="diffFixedText"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Project Info Modal -->
+  <div class="modal-overlay" id="projectInfoModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-category">학생 기획 프로젝트 정보</span>
+          <h2 class="modal-title">「문맥과 결」 - AI 글 다차원 오류 검사기</h2>
+        </div>
+        <button class="modal-close-btn" id="closeModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">기획 및 개발자</span>
+            <span class="info-value highlight-val">손준혁</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">관심 분야 / 희망 진로</span>
+            <span class="info-value highlight-val">문학 / 인문학 계열</span>
+          </div>
+          <div class="info-item full-width">
+            <span class="info-label">프로젝트 주제 한 줄 요약</span>
+            <span class="info-value">작성한 글의 오류(맞춤법, 띄어쓰기, 맥락, 어휘 수준)를 찾아내는 인문학 특화 검사 앱</span>
+          </div>
+          <div class="info-item full-width">
+            <span class="info-label">기획 동기 및 문제의식</span>
+            <span class="info-value">글을 작성하고 확인해 보면 처음에는 인지하기 어려웠던 오류가 반복적으로 확인되어 불편함을 느꼈으며, 에세이나 글을 신속하게 점검하여 제출·발행할 수 있도록 기획함.</span>
+          </div>
+          <div class="info-item full-width">
+            <span class="info-label">타겟 사용자 및 활용 시나리오</span>
+            <span class="info-value">작가 및 과제/에세이를 작성하는 학생이 작성 도중 또는 제출 직전, 단순 철자 검사를 넘어 글의 논리적 흐름과 어휘적 격조까지 다차원으로 점검할 때 활용.</span>
+          </div>
+          <div class="info-item full-width">
+            <span class="info-label">구현된 3대 핵심 기능</span>
+            <div class="features-pill-list">
+              <div class="feat-pill"><i data-lucide="check"></i> 1. 글 맞춤법 검사</div>
+              <div class="feat-pill"><i data-lucide="check"></i> 2. 띄어쓰기 정밀 교정</div>
+              <div class="feat-pill"><i data-lucide="check"></i> 3. 글 맥락, 흐름 & 어휘 수준 다차원 검사</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="confirmModalBtn">확인하고 에디터 사용하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
