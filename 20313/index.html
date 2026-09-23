@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyncHire | AI 키워드 자소서 및 채용 매칭 플랫폼</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    
+    <header class="glass-nav">
+        <div class="logo">Sync<span>Hire</span></div>
+        <div class="header-controls">
+            <div id="mode-toggle-container" class="mode-toggle hidden">
+                <span id="mode-label-seeker" class="active-mode">👨‍🎓 취준생 모드</span>
+                <label class="switch header-switch">
+                    <input type="checkbox" id="account-mode-toggle" onchange="toggleAccountMode(this)">
+                    <span class="slider round"></span>
+                </label>
+                <span id="mode-label-recruiter">🏢 기업 모드</span>
+            </div>
+            
+            <nav>
+                <a href="#" onclick="showSection('hero-section'); return false;">홈</a>
+                <a href="#" class="btn-primary" id="start-btn" onclick="startApp(); return false;">대시보드 시작하기</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section id="hero-section" class="hero">
+            <h1>당신의 경험이 <span>스펙</span>이 되는 순간</h1>
+            <p>키워드만 입력하면 AI가 완벽한 자기소개서를 작성하고 이유를 설명해줍니다.<br>작성된 자소서를 통해 기업들의 다이렉트 채용 제안을 받아보세요.</p>
+            <div class="hero-buttons">
+                <a href="#" class="btn-primary large" onclick="startApp('seeker'); return false;">취업 준비생 시작하기</a>
+                <a href="#" class="btn-secondary large" onclick="startApp('recruiter'); return false;">기업 회원 시작하기</a>
+            </div>
+        </section>
+
+        <section id="app-section" class="app-dashboard hidden">
+            <aside class="sidebar glass">
+                <div class="user-profile" id="sidebar-profile">
+                    <div class="avatar">👨‍🎓</div>
+                    <div class="info">
+                        <strong>취업준비생</strong>
+                        <span>내 계정 관리</span>
+                    </div>
+                </div>
+                
+                <!-- 취준생 8개 메뉴 -->
+                <nav class="sidebar-nav" id="seeker-menu" style="overflow-y: auto; max-height: calc(100vh - 200px);">
+                    <button class="nav-btn active" data-target="gen-view">✨ AI 자소서 생성</button>
+                    <button class="nav-btn" data-target="gap-view">📊 역량 갭 분석 리포트</button>
+                    <button class="nav-btn" data-target="portfolio-view">📝 내 이력서 관리</button>
+                    <button class="nav-btn" data-target="job-view">🔍 맞춤형 공고 탐색</button>
+                    <button class="nav-btn" data-target="mentor-view">☕ 현직자 멘토링 커피챗</button>
+                    <button class="nav-btn" data-target="calendar-view">📅 취업 일정 캘린더</button>
+                    <button class="nav-btn" data-target="interview-view">🎯 AI 모의 면접</button>
+                    <button class="nav-btn" data-target="insight-view">💡 자소서 인사이트</button>
+                </nav>
+
+                <!-- 기업 7개 메뉴 -->
+                <nav class="sidebar-nav hidden" id="recruiter-menu" style="overflow-y: auto; max-height: calc(100vh - 200px);">
+                    <button class="nav-btn recruiter-mode" data-target="recruiter-search-view">🏢 인재 검색 및 매칭</button>
+                    <button class="nav-btn recruiter-mode" data-target="ai-filter-view">⚡ AI 서류 필터링</button>
+                    <button class="nav-btn recruiter-mode" data-target="recruiter-manage-view">📊 채용 공고 관리</button>
+                    <button class="nav-btn recruiter-mode" data-target="recruiter-inbox-view">📫 받은 이력서함</button>
+                    <button class="nav-btn recruiter-mode" data-target="question-view">🎯 맞춤형 면접 질문</button>
+                    <button class="nav-btn recruiter-mode" data-target="analytics-view">📈 채용 통계 파이프라인</button>
+                    <button class="nav-btn recruiter-mode" data-target="branding-view">✨ 기업 브랜딩 관리</button>
+                </nav>
+            </aside>
+
+            <div class="dashboard-content">
+                <!-- ==================== 취준생 뷰 ==================== -->
+                
+                <!-- 1. AI 자소서 생성 -->
+                <div id="gen-view" class="view-panel active-view app-view seeker-only">
+                    <h2>✨ AI 자기소개서 생성</h2>
+                    <p class="section-desc">간단한 키워드를 입력하고 AI가 어떻게 당신의 이야기를 풀어내는지 확인해보세요.</p>
+                    <div class="demo-container glass">
+                        <div class="input-panel">
+                            <h3>나의 경험 키워드 입력</h3>
+                            <form id="ai-form">
+                                <div class="input-group">
+                                    <label>출신 학교 / 전공</label>
+                                    <input type="text" id="edu" placeholder="예: 한국대학교 컴퓨터공학과" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>주요 활동 및 경험</label>
+                                    <input type="text" id="activity" placeholder="예: 교내 알고리즘 동아리 회장, 해커톤 우수상" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>보유 자격증 / 기술</label>
+                                    <input type="text" id="cert" placeholder="예: 정보처리기사, Python, React" required>
+                                </div>
+                                <button type="submit" class="btn-primary generate-btn">AI 자기소개서 생성하기 🪄</button>
+                            </form>
+                        </div>
+                        <div class="output-panel">
+                            <h3>AI 생성 결과 및 분석</h3>
+                            <div id="loading" class="hidden">
+                                <div class="spinner"></div>
+                                <p>AI가 심층 분석하여 자소서를 작성 중입니다...</p>
+                            </div>
+                            <div id="result" class="hidden">
+                                <div class="result-content">
+                                    <h4>자기소개서 초안</h4>
+                                    <p id="generated-text"></p>
+                                </div>
+                                <div class="ai-explanation">
+                                    <h4>💡 AI 작성 포인트</h4>
+                                    <p id="explanation-text"></p>
+                                </div>
+                                <button class="btn-secondary upload-btn" onclick="triggerAction('save-resume')">내 이력서에 저장하기</button>
+                            </div>
+                            <div id="placeholder" class="placeholder-text">좌측에 키워드를 입력하고 생성 버튼을 눌러주세요.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 역량 갭 분석 리포트 (NEW) -->
+                <div id="gap-view" class="view-panel hidden app-view seeker-only">
+                    <h2>📊 역량 갭(Gap) 분석 리포트</h2>
+                    <p class="section-desc">목표 직무와 현재 이력서 간의 부족한 역량을 분석하여 보완 계획을 세워보세요.</p>
+                    <div class="gap-container glass">
+                        <div class="gap-header">
+                            <h3>목표 기업/직무: 네이버 (프론트엔드 엔지니어)</h3>
+                            <button class="btn-secondary small" onclick="triggerAction('change-goal')">목표 직무 변경</button>
+                        </div>
+                        <div class="gap-content">
+                            <div class="skill-bar">
+                                <span>React & Vue (보유)</span>
+                                <div class="progress-track"><div class="progress-fill" style="width: 90%; background:var(--primary)">90%</div></div>
+                            </div>
+                            <div class="skill-bar">
+                                <span>상태 관리 (Redux/Zustand) (보유)</span>
+                                <div class="progress-track"><div class="progress-fill" style="width: 75%; background:var(--primary)">75%</div></div>
+                            </div>
+                            <div class="skill-bar">
+                                <span>웹 성능 최적화 (부족) ⚠️</span>
+                                <div class="progress-track"><div class="progress-fill" style="width: 30%; background:#f59e0b">30%</div></div>
+                            </div>
+                            <div class="skill-bar">
+                                <span>CI/CD 파이프라인 구축 (부족) ⚠️</span>
+                                <div class="progress-track"><div class="progress-fill" style="width: 15%; background:#ef4444">15%</div></div>
+                            </div>
+                        </div>
+                        <div class="ai-hint mt-2">
+                            <strong>💡 AI 보완 추천:</strong> 서류 합격률을 20% 높이려면 <strong>'Lighthouse를 활용한 웹 성능 최적화 프로젝트'</strong> 경험을 포트폴리오에 추가하는 것을 강력히 권장합니다.
+                            <button class="btn-primary small mt-1 w-100" onclick="triggerToast('관련 온라인 강의 및 프로젝트 아이디어를 검색합니다.')">맞춤형 보완 프로젝트 추천받기</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 내 이력서 관리 -->
+                <div id="portfolio-view" class="view-panel hidden app-view seeker-only">
+                    <h2>📝 내 이력서 및 자소서 관리</h2>
+                    <div class="portfolio-dashboard glass">
+                        <div class="toggle-visibility">
+                            <span>기업에게 내 프로필 공개하기 (네이버, 카카오 등 주요 기업 인사담당자 열람)</span>
+                            <label class="switch">
+                                <input type="checkbox" checked onchange="triggerToast(this.checked ? '프로필이 기업에게 공개되었습니다.' : '프로필이 비공개로 전환되었습니다.')">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <hr class="divider">
+                        <h3>저장된 자기소개서</h3>
+                        <div class="saved-item">
+                            <div>
+                                <h4>프론트엔드 개발자 지원용 자소서</h4>
+                                <p>업데이트: 2026.09.23 | 태그: React, 해커톤</p>
+                            </div>
+                            <div>
+                                <button class="btn-secondary small" onclick="triggerAction('edit-resume')">수정</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. 맞춤형 공고 탐색 -->
+                <div id="job-view" class="view-panel hidden app-view seeker-only">
+                    <h2>🔍 맞춤형 채용 공고 탐색</h2>
+                    <p class="section-desc">내 키워드와 자소서를 바탕으로 AI가 추천하는 실제 기업 공고입니다.</p>
+                    <div class="cards-grid">
+                        <div class="job-card glass">
+                            <div class="company-logo" style="background:#03C75A; color:white;">N</div>
+                            <h4>네이버 Search 프론트엔드 엔지니어</h4>
+                            <p class="company-name">네이버 (NAVER Corp.)</p>
+                            <div class="tags"><span class="tag">React</span><span class="tag">TypeScript</span></div>
+                            <p class="match-rate">매칭률 96% - '해커톤 우수' 키워드 일치</p>
+                            <button class="btn-primary small w-100" onclick="triggerAction('apply', '네이버')">내 자소서로 원클릭 지원</button>
+                        </div>
+                        <div class="job-card glass">
+                            <div class="company-logo" style="background:#FEE500; color:black;">K</div>
+                            <h4>카카오톡 백엔드 엔지니어</h4>
+                            <p class="company-name">카카오 (Kakao Corp.)</p>
+                            <div class="tags"><span class="tag">Python</span><span class="tag">대용량 트래픽</span></div>
+                            <p class="match-rate">매칭률 89% - 알고리즘 역량 가점</p>
+                            <button class="btn-primary small w-100" onclick="triggerAction('apply', '카카오')">내 자소서로 원클릭 지원</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. 현직자 멘토링 커피챗 (NEW) -->
+                <div id="mentor-view" class="view-panel hidden app-view seeker-only">
+                    <h2>☕ 현직자 멘토링 매칭</h2>
+                    <p class="section-desc">관심 기업의 현직자와 1:1 커피챗을 통해 생생한 실무 팁을 얻어보세요.</p>
+                    <div class="cards-grid">
+                        <div class="job-card glass">
+                            <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+                                <div class="avatar" style="font-size:2.5rem;">👨‍💻</div>
+                                <div>
+                                    <h4 style="margin:0;">김개발 멘토 (3년차)</h4>
+                                    <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">네이버 / 프론트엔드 코어팀</p>
+                                </div>
+                            </div>
+                            <p style="font-size:0.9rem; margin-bottom:1rem;">"비전공자에서 네이버 프론트엔드 개발자로 합격한 노하우 공유해 드립니다."</p>
+                            <button class="btn-secondary small w-100" onclick="triggerAction('request-coffee', '김개발 멘토')">커피챗 요청하기 (15분)</button>
+                        </div>
+                        <div class="job-card glass">
+                            <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+                                <div class="avatar" style="font-size:2.5rem;">👩‍💻</div>
+                                <div>
+                                    <h4 style="margin:0;">이서버 멘토 (5년차)</h4>
+                                    <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">토스 / 뱅크 백엔드 파트</p>
+                                </div>
+                            </div>
+                            <p style="font-size:0.9rem; margin-bottom:1rem;">"트래픽 처리 경험이 없어도 포트폴리오를 돋보이게 만드는 법"</p>
+                            <button class="btn-secondary small w-100" onclick="triggerAction('request-coffee', '이서버 멘토')">커피챗 요청하기 (15분)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. 취업 일정 캘린더 (NEW) -->
+                <div id="calendar-view" class="view-panel hidden app-view seeker-only">
+                    <h2>📅 취업 일정 관리 캘린더</h2>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
+                        <p class="section-desc">서류 마감일과 면접 일정을 한 곳에서 관리하세요.</p>
+                        <button class="btn-primary small" onclick="triggerAction('add-schedule')">새 일정 추가</button>
+                    </div>
+                    <div class="calendar-container glass" style="padding:1.5rem; text-align:center; min-height:400px; display:flex; flex-direction:column; justify-content:center;">
+                        <h3 style="margin-bottom:1rem;">2026년 9월</h3>
+                        <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:0.5rem; color:var(--text-muted); font-size:0.9rem;">
+                            <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:0.5rem; margin-top:1rem; font-size:1rem;">
+                            <div style="padding:1rem; background:rgba(255,255,255,0.05); border-radius:8px;">20</div>
+                            <div style="padding:1rem; background:rgba(255,255,255,0.05); border-radius:8px; border:1px solid var(--primary);">21<br><span style="font-size:0.7rem; color:var(--primary)">네이버 서류마감</span></div>
+                            <div style="padding:1rem; background:rgba(255,255,255,0.05); border-radius:8px;">22</div>
+                            <div style="padding:1rem; background:var(--primary); color:white; border-radius:8px; font-weight:bold;">23 (오늘)</div>
+                            <div style="padding:1rem; background:rgba(255,255,255,0.05); border-radius:8px;">24</div>
+                            <div style="padding:1rem; background:rgba(255,255,255,0.05); border-radius:8px; border:1px solid #f59e0b;">25<br><span style="font-size:0.7rem; color:#f59e0b;">토스 코테</span></div>
+                            <div style="padding:1rem; background:rgba(255,255,255,0.05); border-radius:8px;">26</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. AI 모의 면접 (Gemini 연동) -->
+                <div id="interview-view" class="view-panel hidden app-view seeker-only">
+                    <h2>🎯 AI 모의 면접 준비 <span class="badge" style="background:var(--primary)">Gemini AI</span></h2>
+                    <p class="section-desc">실제 파이썬 백엔드(Gemini API)가 실시간으로 질문을 생성합니다.</p>
+                    <div class="interview-layout">
+                        <div class="interview-container glass" style="flex: 2;">
+                            <div class="chat-area" id="chat-area">
+                                <div class="message ai">
+                                    <div class="msg-avatar">🤖</div>
+                                    <div class="msg-bubble">
+                                        안녕하세요! 지원자님. 직무와 관련하여 겪었던 가장 어려웠던 문제와 이를 어떻게 해결했는지 말씀해 주시겠어요?
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="input-area">
+                                <input type="text" id="interview-input" placeholder="답변을 입력해보세요 (엔터로 전송)">
+                                <button class="btn-primary" id="send-interview-btn">답변 제출</button>
+                            </div>
+                        </div>
+                        <div class="api-key-panel glass" style="flex: 1; padding: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+                            <h3>🔑 Gemini AI 활성화</h3>
+                            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                                초고성능 AI 면접관과 대화하려면 구글의 무료 Gemini API 키가 필요합니다.
+                            </p>
+                            <ol style="font-size: 0.85rem; color: var(--text-muted); margin-left: 1rem; line-height: 1.8;">
+                                <li><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--primary); text-decoration: underline;">Google AI Studio</a>에 접속하여 구글 계정으로 로그인합니다.</li>
+                                <li>파란색 <strong>[Create API key]</strong> 버튼을 클릭합니다.</li>
+                                <li>생성된 긴 문자열(AIzaSy…)을 복사하여 아래에 붙여넣으세요.</li>
+                            </ol>
+                            <div style="margin-top: auto;">
+                                <label style="display:block; margin-bottom:0.5rem; font-weight:600; font-size:0.9rem;">API 키 입력</label>
+                                <input type="password" id="gemini-api-key" placeholder="AIzaSy..." style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; margin-bottom: 1rem;">
+                                <button class="btn-secondary w-100" onclick="triggerToast('API 키가 임시 저장되었습니다! 이제 답변을 입력해보세요.')">키 적용하기</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8. 자소서 인사이트 -->
+                <div id="insight-view" class="view-panel hidden app-view seeker-only">
+                    <h2>💡 자소서 인사이트 및 트렌드</h2>
+                    <div class="insights-grid">
+                        <div class="insight-card glass">
+                            <h3>🔥 이번 주 IT 인기 직무 키워드</h3>
+                            <ul class="trend-list">
+                                <li>1. 클라우드 인프라 (▲ 2)</li>
+                                <li>2. 대용량 트래픽 처리 (▼ 1)</li>
+                            </ul>
+                            <button class="btn-secondary small mt-1 w-100" onclick="triggerAction('view-trends')">전체 트렌드 분석 보고서 보기</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== 기업(Recruiter) 뷰 ==================== -->
+                
+                <!-- R1. 인재 검색 -->
+                <div id="recruiter-search-view" class="view-panel hidden app-view recruiter-only recruiter-theme">
+                    <h2>🏢 인재 검색 대시보드 <span class="badge">네이버 인사팀</span></h2>
+                    <div class="search-bar glass">
+                        <input type="text" placeholder="인재 검색 키워드 입력 (예: React, 성능 최적화)">
+                        <button class="btn-primary" style="background: var(--recruiter)">인재 AI 검색</button>
+                    </div>
+                    <div class="table-container glass mt-2">
+                        <table class="recruiter-table">
+                            <thead>
+                                <tr>
+                                    <th>프로필</th>
+                                    <th>주요 역량 키워드</th>
+                                    <th>매칭 점수</th>
+                                    <th>액션</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>김*준</strong> (신입)</td>
+                                    <td>React, 성능 최적화, 리더십</td>
+                                    <td><span class="score high">98점</span></td>
+                                    <td>
+                                        <button class="btn-secondary small" onclick="triggerAction('view-resume', '김*준')">열람</button>
+                                        <button class="btn-primary small" style="background: var(--recruiter)" onclick="triggerAction('send-offer', '김*준')">제안 발송</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- R2. AI 자동 서류 필터링 (NEW) -->
+                <div id="ai-filter-view" class="view-panel hidden app-view recruiter-only recruiter-theme">
+                    <h2>⚡ AI 자동 서류 필터링 시스템</h2>
+                    <p class="section-desc">수백 장의 이력서를 사람이 읽지 않고 직무 적합도에 따라 AI가 자동 필터링합니다.</p>
+                    <div class="glass" style="padding: 2rem; text-align: center;">
+                        <h3 style="margin-bottom:1rem;">프론트엔드 공채 이력서 420건 접수됨</h3>
+                        <button class="btn-primary large" style="background: var(--recruiter); margin-bottom: 2rem;" onclick="triggerAction('run-filter')">AI 직무 적합성 분석 시작 (클릭)</button>
+                        <div style="display:flex; justify-content:space-around; text-align:center;">
+                            <div><strong style="font-size:2rem; color:var(--recruiter)">35명</strong><p>90% 이상 (최우수)</p></div>
+                            <div><strong style="font-size:2rem; color:var(--accent)">120명</strong><p>70~89% (우수)</p></div>
+                            <div><strong style="font-size:2rem; color:var(--text-muted)">265명</strong><p>70% 미만 (불합격)</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- R3. 채용 공고 관리 -->
+                <div id="recruiter-manage-view" class="view-panel hidden app-view recruiter-only recruiter-theme">
+                    <h2>📊 채용 공고 관리</h2>
+                    <div class="cards-grid">
+                        <div class="job-card glass" style="border-top: 4px solid var(--recruiter)">
+                            <h4>2026 하반기 네이버 Search 프론트엔드 공채</h4>
+                            <p class="company-name">지원자 수: 420명</p>
+                            <button class="btn-secondary small w-100" onclick="triggerAction('edit-job')">공고 수정</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- R4. 받은 이력서함 -->
+                <div id="recruiter-inbox-view" class="view-panel hidden app-view recruiter-only recruiter-theme">
+                    <h2>📫 받은 이력서함</h2>
+                    <div class="portfolio-dashboard glass">
+                        <div class="saved-item">
+                            <div>
+                                <h4>박*성 (서버 개발자 지원)</h4>
+                                <p>수신일: 2026.09.23 | AI 코멘트: "비동기 트래픽 처리 경험 돋보임"</p>
+                            </div>
+                            <div>
+                                <button class="btn-secondary small" onclick="triggerAction('view-resume', '박*성')">열람</button>
+                                <button class="btn-primary small" style="background: var(--recruiter)" onclick="triggerAction('accept', '박*성')">합격 처리</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- R5. 맞춤형 면접 질문 은행 (NEW) -->
+                <div id="question-view" class="view-panel hidden app-view recruiter-only recruiter-theme">
+                    <h2>🎯 맞춤형 면접 질문 추천 (면접관용)</h2>
+                    <p class="section-desc">지원자의 이력서를 기반으로 면접관이 실제 현장에서 던지기 좋은 질문을 AI가 뽑아줍니다.</p>
+                    <div class="glass" style="padding:2rem;">
+                        <select style="width:100%; padding:1rem; border-radius:8px; background:rgba(0,0,0,0.3); color:white; border:1px solid var(--glass-border); margin-bottom:1.5rem;">
+                            <option>지원자 선택: 김*준 (프론트엔드)</option>
+                        </select>
+                        <div style="background:rgba(255,255,255,0.05); padding:1rem; border-left:4px solid var(--recruiter); border-radius:4px; margin-bottom:1rem;">
+                            <strong style="color:var(--recruiter)">기술 검증 질문</strong>
+                            <p>자소서에 React 최적화를 통해 렌더링 속도를 30% 개선했다고 하셨는데, 구체적으로 어떤 병목을 발견했고 어떤 훅(Hook)이나 기법을 사용하셨나요?</p>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.05); padding:1rem; border-left:4px solid var(--accent); border-radius:4px;">
+                            <strong style="color:var(--accent)">컬처핏/협업 질문</strong>
+                            <p>해커톤에서 의견 충돌이 있었을 때, 팀원들을 설득했던 본인만의 논리적 기준이나 커뮤니케이션 방법론은 무엇이었습니까?</p>
+                        </div>
+                        <button class="btn-secondary small mt-2" onclick="triggerToast('다른 면접관들에게 질문 리스트를 공유했습니다.')">면접관들에게 공유하기</button>
+                    </div>
+                </div>
+
+                <!-- R6. 채용 통계 파이프라인 (NEW) -->
+                <div id="analytics-view" class="view-panel hidden app-view recruiter-only recruiter-theme">
+                    <h2>📈 채용 통계 파이프라인 대시보드</h2>
+                    <p class="section-desc">현재 공고의 지원자 퍼널(Funnel) 데이터를 시각화합니다.</p>
+                    <div class="cards-grid">
+                        <div class="glass" style="padding:2rem; text-align:center;">
+                            <h3>유입 전환율</h3>
+                            <div style="font-size:3rem; font-weight:bold; color:var(--recruiter); margin:1rem 0;">18.5%</div>
+                            <p style="color:var(--text-muted); font-size:0.9rem;">공고 조회 대비 지원율</p>
+                        </div>
+                        <div class="glass" style="padding:2rem; text-align:center;">
+                            <h3>평균 채용 소요 시간</h3>
+                            <div style="font-size:3rem; font-weight:bold; color:var(--accent); margin:1rem 0;">14일</div>
+                            <p style="color:var(--text-muted); font-size:0.9rem;">서류 접수부터 최종 합격까지</p>
+                        </div>
+                    </div>
+                    <div class="glass mt-2" style="padding:2rem; text-align:center; height:200px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--glass-border);">
+                        <p style="color:var(--text-muted)">📊 [차트 영역] 서류 420명 ➔ 1차 면접 45명 ➔ 최종 합격 5명</p>
+                    </div>
+                </div>
+
+                <!-- R7. 기업 브랜딩 관리 (NEW) -->
+                <div id="branding-view" class="view-panel hidden app-view recruiter-only recruiter-theme">
+                    <h2>✨ 기업 브랜딩 및 컬처핏 페이지 관리</h2>
+                    <p class="section-desc">취업준비생에게 보여질 기업 소개 페이지를 다듬어보세요.</p>
+                    <div class="glass" style="padding:2rem;">
+                        <div class="input-group">
+                            <label>핵심 조직 문화 키워드 (3개)</label>
+                            <input type="text" value="자율출퇴근, 수평적 소통, 무제한 성장 지원" disabled>
+                        </div>
+                        <div class="input-group">
+                            <label>기업 소개글 수정</label>
+                            <textarea style="width: 100%; height: 100px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 1rem; border-radius: 8px; resize: none;">네이버는 누구나 쉽게 정보를 찾고 소통할 수 있는 세상을 만듭니다...</textarea>
+                        </div>
+                        <button class="btn-primary" style="background:var(--recruiter)" onclick="triggerToast('기업 브랜딩 페이지가 업데이트 되었습니다.')">퍼블리싱 적용하기</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- 모달 및 토스트 -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal()">
+        <div class="modal glass" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="modal-title">알림</h3>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modal-body">내용</div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">닫기</button>
+                <button class="btn-primary" id="modal-confirm-btn" onclick="closeModal()">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
