@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>EyeGlass AI - 시각장애인용 스마트 글래스 AI 보행 내비게이션</title>
+  <meta name="description" content="동반자나 지팡이 없이도 안전하게 외출할 수 있는 스마트 안경형 AI 전방 인식 및 주변 소리 탐지 보행 내비게이션">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Pretendard:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-hud" id="appBody">
+  <!-- Screen Reader Live Announcements -->
+  <div id="srAnnounce" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+
+  <!-- Main Smart Glasses Viewport -->
+  <div class="glasses-wrapper" id="glassesWrapper">
+    <!-- Glasses Lens Frame Aesthetic Overlay -->
+    <div class="glasses-frame-overlay">
+      <div class="lens-contour left-lens"></div>
+      <div class="bridge-contour"></div>
+      <div class="lens-contour right-lens"></div>
+    </div>
+
+    <!-- Active Visual Display (Canvas for Simulation or Video for Webcam) -->
+    <div class="viewport-container" id="viewportContainer">
+      <canvas id="simCanvas" width="1280" height="720"></canvas>
+      <video id="webcamVideo" autoplay playsinline muted class="hidden-media"></video>
+      <canvas id="hudCanvas" width="1280" height="720"></canvas>
+    </div>
+
+    <!-- Top Telemetry & Status HUD Header -->
+    <header class="hud-top-bar" role="banner">
+      <div class="hud-badge app-title-badge">
+        <span class="pulse-indicator online"></span>
+        <div class="brand-text">
+          <span class="brand-name">EyeGlass AI</span>
+          <span class="brand-sub">VISION & ACOUSTIC HUD v2.5</span>
+        </div>
+      </div>
+
+      <!-- Center Compass & Heading -->
+      <div class="compass-hud" id="compassHud" aria-label="현재 보행 방향">
+        <div class="compass-dial">
+          <span class="compass-needle" id="compassNeedle"></span>
+          <span class="compass-cardinal">북 (N 015°)</span>
+        </div>
+        <div class="pedestrian-status">
+          <span class="status-item"><strong id="walkSpeed">1.2</strong> m/s 보행중</span>
+          <span class="status-divider">•</span>
+          <span class="status-item"><strong id="stepCount">438</strong> 걸음</span>
+        </div>
+      </div>
+
+      <!-- Right System Indicators -->
+      <div class="hud-right-telemetry">
+        <div class="telemetry-pill">
+          <span class="pill-label">GPS 정확도</span>
+          <span class="pill-val">±0.4m 정밀</span>
+        </div>
+        <div class="telemetry-pill battery-pill">
+          <span class="battery-icon"><span class="battery-level" style="width: 88%;"></span></span>
+          <span class="pill-val">88%</span>
+        </div>
+        <div class="telemetry-pill live-time" id="liveClock">14:20:00</div>
+      </div>
+    </header>
+
+    <!-- Center Dynamic Hazard & Navigation Banner -->
+    <div class="central-guidance-container" id="guidanceContainer">
+      <div class="primary-nav-banner safe" id="navBanner">
+        <div class="banner-icon-box" id="bannerIconBox">
+          <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 2v20M12 2l-7 7M12 2l7 7"/>
+          </svg>
+        </div>
+        <div class="banner-text-group">
+          <h1 class="guidance-main-msg" id="guidanceMainMsg">전방 안전 도보 경로 진행 중</h1>
+          <p class="guidance-sub-msg" id="guidanceSubMsg">12시 방향 직진 경로가 확보되었습니다. 50m 앞 횡단보도 접근 중</p>
+        </div>
+        <div class="distance-badge" id="distanceBadge">직진 50m</div>
+      </div>
+
+      <!-- Urgent Threat Alert Box (Appears on critical hazards) -->
+      <div class="urgent-threat-alert hidden" id="urgentThreatAlert" role="alert">
+        <div class="alert-pulse-ring"></div>
+        <div class="alert-content">
+          <span class="alert-badge">🚨 긴급 위험 경보</span>
+          <span class="alert-text" id="urgentAlertText">우측 후방 5m 차량 경적 발생! 즉시 멈추세요!</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Smart Glasses AR Crosshair & Center Aim -->
+    <div class="hud-center-reticle" aria-hidden="true">
+      <div class="reticle-circle"></div>
+      <div class="reticle-line h-line"></div>
+      <div class="reticle-line v-line"></div>
+      <div class="reticle-dots"></div>
+    </div>
+
+    <!-- Left Overlay: Forward Vision AI Object Tracking List -->
+    <aside class="hud-panel left-panel vision-tracker-panel" aria-label="전방 AI 실시간 객체 인식 목록">
+      <div class="panel-header">
+        <span class="panel-title">
+          <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"></path>
+          </svg>
+          전방 AI 비전 인식 (Vision AI)
+        </span>
+        <span class="live-tag">LIVE AI</span>
+      </div>
+      <div class="detected-items-list" id="detectedItemsList">
+        <!-- Dynamically injected item cards -->
+      </div>
+      <div class="panel-footer-ocr" id="ocrFooterBox">
+        <span class="ocr-icon">🔤</span>
+        <div class="ocr-content">
+          <span class="ocr-title">간판/표지판 실시간 OCR</span>
+          <span class="ocr-text" id="ocrDetectedText">"스타벅스 강남점 전방 15m"</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Overlay: Acoustic Radar 360 & Sound Detection -->
+    <aside class="hud-panel right-panel sound-radar-panel" aria-label="주변 위험 소리 360도 탐지">
+      <div class="panel-header">
+        <span class="panel-title">
+          <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="22"></line>
+          </svg>
+          주변 사운드 360° 레이더 (Acoustic AI)
+        </span>
+        <span class="mic-status-tag" id="micStatusTag">MIC ACTIVE</span>
+      </div>
+
+      <!-- 360 Degree Acoustic Radar Display -->
+      <div class="radar-container">
+        <div class="radar-sweep"></div>
+        <div class="radar-rings">
+          <div class="radar-ring r1"></div>
+          <div class="radar-ring r2"></div>
+          <div class="radar-ring r3"></div>
+          <div class="radar-cross-h"></div>
+          <div class="radar-cross-v"></div>
+          <div class="radar-center-user" title="내 위치">
+            <span class="user-dot"></span>
+          </div>
+        </div>
+        <!-- Blips positioned on radar -->
+        <div class="radar-blips-layer" id="radarBlipsLayer"></div>
+      </div>
+
+      <!-- Live Audio Spectrum Visualizer -->
+      <div class="audio-spectrum-wrapper">
+        <div class="spectrum-header">
+          <span>주파수 스펙트럼 분석</span>
+          <span id="ambientDb">48 dB (도심 소음)</span>
+        </div>
+        <canvas id="spectrumCanvas" width="280" height="48"></canvas>
+      </div>
+
+      <!-- Sound Events Log -->
+      <div class="sound-events-list" id="soundEventsList">
+        <!-- Dynamically injected sound events -->
+      </div>
+    </aside>
+
+    <!-- Bottom HUD Control & Interaction Bar -->
+    <footer class="hud-bottom-bar" role="toolbar" aria-label="스마트 글래스 제어 도구">
+      <!-- Voice Assistant Trigger & Status -->
+      <button class="control-btn voice-assistant-btn" id="voiceAssistantBtn" aria-label="음성 비서 부르기 (스페이스바 또는 클릭)">
+        <div class="voice-wave-anim">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div class="btn-text-col">
+          <span class="btn-title">음성 비서 (STT)</span>
+          <span class="btn-subtitle" id="voiceStatusText">"말씀하세요" or 스페이스바</span>
+        </div>
+      </button>
+
+      <!-- Scenario Selector Buttons -->
+      <div class="scenario-selector-group" role="group" aria-label="보행 시나리오 선택">
+        <button class="scenario-btn active" data-scenario="sidewalk" id="scenBtn1" title="1번: 일반 도심 보도">
+          <span class="scen-num">1</span>
+          <span class="scen-label">도심 보도</span>
+        </button>
+        <button class="scenario-btn" data-scenario="crosswalk" id="scenBtn2" title="2번: 횡단보도 신호 대기 및 보행">
+          <span class="scen-num">2</span>
+          <span class="scen-label">횡단보도</span>
+        </button>
+        <button class="scenario-btn" data-scenario="danger" id="scenBtn3" title="3번: 자전거 및 차량 경적 돌발 상황">
+          <span class="scen-num">3</span>
+          <span class="scen-label">돌발 위험</span>
+        </button>
+        <button class="scenario-btn" data-scenario="construction" id="scenBtn4" title="4번: 공사구간 우회 보행">
+          <span class="scen-num">4</span>
+          <span class="scen-label">공사 우회</span>
+        </button>
+        <button class="scenario-btn camera-mode-btn" data-scenario="camera" id="scenBtnCamera" title="5번: 실제 내 웹캠 및 마이크 사용">
+          <span class="scen-num">📷</span>
+          <span class="scen-label">실제 카메라</span>
+        </button>
+      </div>
+
+      <!-- Action Utility Buttons -->
+      <div class="hud-actions-group">
+        <!-- Sound Effect / Simulated Sound Trigger -->
+        <button class="action-btn" id="triggerSoundBtn" title="위험 사운드 시뮬레이션 발생 (경적/사이렌/벨)" aria-label="위험 소리 테스트">
+          <span class="action-icon">🔔</span>
+          <span class="action-txt">소리 테스트</span>
+        </button>
+
+        <!-- TTS Voice Guidance Mute Toggle -->
+        <button class="action-btn" id="ttsToggleBtn" title="음성 안내 켜기/끄기 (단축키 M)" aria-label="음성 안내 토글">
+          <span class="action-icon" id="ttsIcon">🔊</span>
+          <span class="action-txt" id="ttsTxt">음성 켜짐</span>
+        </button>
+
+        <!-- High Contrast Mode (Low Vision Accessibility) -->
+        <button class="action-btn high-contrast-btn" id="highContrastBtn" title="저시력자용 초고대비 모드 (단축키 H)" aria-label="초고대비 모드 토글">
+          <span class="action-icon">👁️</span>
+          <span class="action-txt">초고대비</span>
+        </button>
+
+        <!-- 3D Spatial Audio Earphone Toggle -->
+        <button class="action-btn" id="spatialAudioBtn" title="3D 입체 음향 (방향별 경고음) On/Off" aria-label="입체 음향 토글">
+          <span class="action-icon">🎧</span>
+          <span class="action-txt">3D 사운드</span>
+        </button>
+
+        <!-- Emergency SOS Button -->
+        <button class="action-btn sos-btn" id="sosBtn" title="긴급 SOS 비상 호출 (단축키 S 또는 3초간 길게 누름)" aria-label="긴급 SOS 비상 호출">
+          <span class="sos-icon">🆘</span>
+          <span class="sos-txt">SOS 긴급</span>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Voice Query Interactive Overlay Modal -->
+  <div class="voice-modal-overlay hidden" id="voiceModal" role="dialog" aria-modal="true" aria-labelledby="voiceModalTitle">
+    <div class="voice-modal-card">
+      <div class="voice-modal-glow"></div>
+      <div class="voice-mic-circle">
+        <svg class="mic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          <line x1="12" y1="19" x2="12" y2="22"></line>
+        </svg>
+      </div>
+      <h2 id="voiceModalTitle" class="voice-modal-title">음성을 듣고 있습니다...</h2>
+      <p class="voice-modal-transcript" id="voiceTranscript">"지금 앞에 뭐가 있어?" 또는 "신호등 상태 알려줘"</p>
+      <div class="voice-sample-queries">
+        <span>추천 질문:</span>
+        <button class="sample-chip" data-query="전체 상황 브리핑해줘">전체 상황 브리핑</button>
+        <button class="sample-chip" data-query="전방 장애물 알려줘">전방 장애물</button>
+        <button class="sample-chip" data-query="신호등 상태 어때?">신호등 상태</button>
+        <button class="sample-chip" data-query="주변 소리 어때?">주변 위험 소리</button>
+      </div>
+      <button class="modal-close-btn" id="closeVoiceModalBtn" aria-label="닫기">✕ 닫기</button>
+    </div>
+  </div>
+
+  <!-- SOS Emergency Modal -->
+  <div class="sos-modal-overlay hidden" id="sosModal" role="dialog" aria-modal="true" aria-labelledby="sosTitle">
+    <div class="sos-modal-card">
+      <div class="sos-alarm-icon">🚨</div>
+      <h2 id="sosTitle" class="sos-title">긴급 SOS 비상 호출 발송</h2>
+      <p class="sos-desc">
+        현재 스마트 글래스의 GPS 정밀 위치(<strong>서울특별시 강남구 테헤란로 152</strong>)와<br>
+        실시간 전방 카메라 영상 및 주변 소리 녹음 정보가 <strong>119 및 등록된 긴급 보호자(보호자 연락처: 010-XXXX-5678)</strong>에게 전송되었습니다.
+      </p>
+      <div class="sos-status-box">
+        <div class="sos-status-row"><span>상태:</span> <strong class="red-text">비상 경보 방송 중 (경광음 출력)</strong></div>
+        <div class="sos-status-row"><span>연결:</span> <strong>119 긴급 상황실 수신 확인됨</strong></div>
+      </div>
+      <div class="sos-btn-row">
+        <button class="sos-cancel-btn" id="cancelSosBtn">오작동 해제 (취소)</button>
+        <button class="sos-call-btn" id="confirmSosCallBtn">보호자 즉시 통화 연결</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full Accessibility & Keyboard Shortcut Help Drawer -->
+  <button class="help-floating-btn" id="helpBtn" title="사용 가이드 및 키보드 단축키 안내" aria-label="단축키 안내">⌨️ 사용법</button>
+  <div class="help-drawer hidden" id="helpDrawer" role="region" aria-label="단축키 및 기능 안내">
+    <div class="drawer-header">
+      <h3>스마트 글래스 단축키 & 음성 가이드</h3>
+      <button class="drawer-close" id="closeHelpBtn" aria-label="도움말 닫기">✕</button>
+    </div>
+    <div class="drawer-body">
+      <ul class="shortcut-list">
+        <li><kbd>Space</kbd> : <strong>즉시 전체 보행 상황 음성 브리핑</strong> (가장 중요)</li>
+        <li><kbd>1</kbd> ~ <kbd>4</kbd> : 보행 시나리오 변경 (도심 보도 / 횡단보도 / 돌발 위험 / 공사구간)</li>
+        <li><kbd>5</kbd> 또는 <kbd>C</kbd> : 실제 사용자 웹캠 & 마이크 연동 모드</li>
+        <li><kbd>H</kbd> : 저시력자용 초고대비 모드 켜기/끄기 (블랙/네온 옐로우)</li>
+        <li><kbd>M</kbd> : 한국어 음성 안내(TTS) 음소거 토글</li>
+        <li><kbd>S</kbd> : 긴급 SOS 비상 호출 트리거</li>
+        <li><kbd>T</kbd> : 위험 소리 시뮬레이션 테스트 (경적, 사이렌, 벨)</li>
+      </ul>
+      <p class="drawer-tip">
+        💡 <strong>스마트폰 또는 태블릿</strong>에서 접속 시 화면 아무 곳이나 <strong>두 번 탭</strong>하면 현재 상황을 음성으로 브리핑하며, 스마트폰 진동 모터(햅틱)로 위험 방향을 알려줍니다.
+      </p>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="scenarios.js"></script>
+  <script src="audio-nav.js"></script>
+  <script src="sound-detector.js"></script>
+  <script src="vision-engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
