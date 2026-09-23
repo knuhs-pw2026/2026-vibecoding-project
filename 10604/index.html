@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChemLab Interactive - 가상 화학 반응 실험실</title>
+  <meta name="description" content="위험하거나 구하기 어려운 화학 시약들을 안전하게 가상 비커에서 조합하고 화학 반응의 원리와 교과서 화학식을 심화 학습하는 인터랙티브 가상 화학 실험실입니다.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2338bdf8'><path d='M19 19H5V8h14m-3-7v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2z'/></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 최상단 헤더 -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <div class="brand-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 2v7.31L4.1 18.2A2 2 0 0 0 5.75 21h12.5a2 2 0 0 0 1.65-2.8L14 9.31V2"/>
+          <line x1="8.5" y1="2" x2="15.5" y2="2"/>
+          <line x1="14" y1="9" x2="10" y2="9"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>ChemLab Interactive</h1>
+        <p>인터랙티브 가상 화학 반응 실험실</p>
+      </div>
+    </div>
+
+    <!-- 모드 전환 네비게이션 -->
+    <nav class="mode-navigation" aria-label="실험 모드 선택">
+      <button id="mode-free-btn" class="mode-tab-btn active" title="원하는 화학 물질을 자유롭게 조합하는 실험실">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        자유 실험실 (Sandbox)
+      </button>
+      <button id="mode-curriculum-btn" class="mode-tab-btn" title="교과서 대표 화학 반응 12선 탐구">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        교과서 화학식 복습
+      </button>
+    </nav>
+
+    <!-- 사운드 컨트롤 -->
+    <div class="header-actions">
+      <button id="sound-toggle-btn" class="icon-btn" title="실험 효과음 켜기/끄기">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 메인 작업 영역 -->
+  <main class="app-main">
+
+    <!-- 1. 자유 실험실 뷰 (기본) -->
+    <section id="free-studio-view" class="studio-grid">
+
+      <!-- 좌측 패널: 시약 보관함 -->
+      <aside class="glass-panel reagent-shelf-panel">
+        <div class="panel-header">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+            시약 보관함 (Reagents)
+          </h2>
+        </div>
+        <div class="panel-body">
+          <!-- 검색창 -->
+          <div class="search-wrapper">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="reagent-search" class="search-input" placeholder="원소, 화학식, 이름 검색 (예: Na, 염산)...">
+          </div>
+
+          <!-- 카테고리 탭 -->
+          <div id="category-tabs" class="category-tabs-scroll"></div>
+
+          <!-- 시약 카드 그리드 -->
+          <div id="reagent-grid" class="reagent-grid"></div>
+        </div>
+      </aside>
+
+      <!-- 중앙 패널: 메인 실험대 및 비커 -->
+      <section class="glass-panel lab-workbench-panel">
+        <div class="workbench-stage">
+
+          <!-- 상단 실시간 계측 HUD -->
+          <div class="sensor-hud">
+            <!-- 온도 센서 -->
+            <div class="hud-item">
+              <div class="hud-label">
+                <span>비커 내부 온도</span>
+                <span>🌡️</span>
+              </div>
+              <div class="hud-value-row">
+                <span id="temp-value" class="hud-value">20°C</span>
+              </div>
+              <div class="meter-track">
+                <div id="temp-bar" class="meter-fill-temp"></div>
+              </div>
+            </div>
+
+            <!-- 상태 인디케이터 -->
+            <div class="hud-item" style="align-items: center; justify-content: center; min-width: 160px;">
+              <span class="hud-label" style="margin-bottom: 2px;">반응 모니터</span>
+              <span id="reaction-status-badge" class="status-badge idle">비커 대기 중</span>
+            </div>
+
+            <!-- pH 센서 -->
+            <div class="hud-item">
+              <div class="hud-label">
+                <span>용액 액성 (pH)</span>
+                <span id="ph-indicator-color" class="ph-dot"></span>
+              </div>
+              <div class="hud-value-row">
+                <span id="ph-value" class="hud-value">7.0</span>
+              </div>
+              <div class="meter-track-ph">
+                <div id="ph-strip-bar" class="ph-pointer" style="left: 50%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 비커 캔버스 영역 (드래그 앤 드롭 타겟) -->
+          <div class="beaker-container" title="시약 카드를 드래그하여 넣거나 클릭하여 투입하세요!">
+            <canvas id="lab-canvas"></canvas>
+          </div>
+
+          <!-- 가열 분젠 버너 기구 -->
+          <div class="burner-rig">
+            <div class="burner-flame-wrapper">
+              <div id="burner-flame" class="burner-flame"></div>
+            </div>
+            <div class="burner-base"></div>
+          </div>
+        </div>
+
+        <!-- 하단 실험 도구 툴바 -->
+        <div class="workbench-toolbar">
+          <button id="burner-toggle-btn" class="tool-btn" title="버너를 켜서 비커를 가열합니다">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            가열 분젠 버너 (Heat)
+          </button>
+          <button id="stir-btn" class="tool-btn" title="비커를 가볍게 흔들어 교반합니다">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            교반 (Stir/Mix)
+          </button>
+          <button id="reset-btn" class="tool-btn danger" title="비커를 깨끗이 비우고 초기화합니다">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            비커 씻어내기 (Reset)
+          </button>
+        </div>
+      </section>
+
+      <!-- 우측 패널: 화학 반응 분석 및 심화 탐구 -->
+      <aside class="glass-panel analysis-panel">
+        <div class="panel-header">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            화학 분석 & 심화 탐구
+          </h2>
+        </div>
+        <div class="panel-body">
+
+          <!-- 비커에 투입된 시약 목록 -->
+          <div class="in-flask-section">
+            <div class="section-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              현재 비커 내 물질
+            </div>
+            <div id="flask-contents-list" class="flask-chips-container">
+              <p id="flask-empty-notice" class="empty-flask-hint">좌측에서 시약을 골라 비커에 넣어보세요!</p>
+            </div>
+          </div>
+
+          <!-- 반응이 일어났을 때 상세 카드 -->
+          <div id="reaction-card" class="reaction-card" style="display: none;">
+            <div class="reaction-header-block">
+              <div class="reaction-badges">
+                <span id="reaction-category-badge" class="badge-tag category">중화 반응</span>
+                <span id="reaction-curriculum-badge" class="badge-tag curriculum">중3 과학</span>
+              </div>
+              <h3 id="reaction-title">염산과 수산화나트륨의 중화 반응</h3>
+            </div>
+
+            <!-- 화학 반응식 박스 -->
+            <div class="equation-box">
+              <div class="equation-row">
+                <span class="equation-label">화학 반응식 (Chemical Equation)</span>
+                <div id="reaction-equation" class="equation-content"></div>
+              </div>
+              <div class="equation-row">
+                <span class="equation-label">알짜 이온 반응식 (Net Ionic)</span>
+                <div id="reaction-net-ionic" class="equation-content secondary"></div>
+              </div>
+            </div>
+
+            <!-- 질량 보존 및 원자 수 밸런스 -->
+            <div>
+              <div class="section-label">원자 보존 법칙 (반응 전후 원자 수)</div>
+              <div id="atom-balance-grid" class="atom-balance-grid"></div>
+            </div>
+
+            <!-- 심화 과학 원리 -->
+            <div class="deep-dive-card">
+              <div class="deep-dive-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                미시적 반응 메커니즘 (원자/이온의 이동)
+              </div>
+              <p id="reaction-mechanism" class="deep-dive-text"></p>
+            </div>
+
+            <!-- 에너지 및 열 변화 -->
+            <div class="deep-dive-card">
+              <div class="deep-dive-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                반응열 & 엔탈피 변화
+              </div>
+              <p id="reaction-energy" class="deep-dive-text"></p>
+            </div>
+
+            <!-- 현실 학교 실험 위험성 & 왜 못해봤을까? -->
+            <div class="deep-dive-card safety-card">
+              <div class="deep-dive-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                학교에서 왜 직접 하기 어려울까? (현실 안전 리포트)
+              </div>
+              <p id="reaction-safety" class="deep-dive-text"></p>
+            </div>
+
+            <!-- 실생활 응용 사례 -->
+            <div class="deep-dive-card">
+              <div class="deep-dive-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                우리 일상 속 화학
+              </div>
+              <p id="reaction-real-life" class="deep-dive-text"></p>
+            </div>
+          </div>
+
+          <!-- 반응이 없을 때의 안내 -->
+          <div id="no-reaction-card" class="no-reaction-box">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <p>
+              현재는 <strong>물리적 혼합 상태</strong>이거나 아직 반응 조건을 만족하지 않았습니다.<br>
+              다른 시약을 추가하거나 <strong>가열 분젠 버너</strong>를 켜보세요!
+            </p>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- 2. 교과서 화학식 복습 뷰 -->
+    <section id="curriculum-view" class="curriculum-view-container">
+      <div class="curriculum-intro">
+        <h2>교과서 필수 화학 반응 12선</h2>
+        <p>중·고등학교 과학 교과서에 등장하는 핵심 화학식을 클릭 한 번으로 가상 실험실에 세팅하여 시각적 현상과 원리를 복습해보세요.</p>
+      </div>
+      <div id="preset-grid" class="curriculum-grid"></div>
+    </section>
+  </main>
+
+  <!-- 시약 상세 정보 모달 -->
+  <div id="chemical-modal" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <h3 id="modal-title">시약 이름</h3>
+          <span id="modal-formula" class="formula">화학식</span>
+        </div>
+        <button id="modal-close-btn" class="icon-btn" title="닫기">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="property-grid">
+          <div class="prop-item">
+            <div class="prop-label">분류</div>
+            <div id="modal-category" class="prop-value">-</div>
+          </div>
+          <div class="prop-item">
+            <div class="prop-label">상온 상태</div>
+            <div id="modal-state" class="prop-value">-</div>
+          </div>
+          <div class="prop-item">
+            <div class="prop-label">액성 (pH)</div>
+            <div id="modal-ph" class="prop-value">-</div>
+          </div>
+          <div class="prop-item">
+            <div class="prop-label">위험 등급</div>
+            <div id="modal-hazard" class="prop-value" style="color: var(--accent-rose);">-</div>
+          </div>
+        </div>
+
+        <div class="modal-hazard-box">
+          <div class="deep-dive-title" style="color: #f87171; margin-bottom: 4px;">
+            ⚠️ 취급 시 주의사항 및 독성 정보
+          </div>
+          <p id="modal-hazard-note" style="font-size: 0.82rem; line-height: 1.5; color: #fca5a5;"></p>
+        </div>
+
+        <div class="modal-desc-box">
+          <div class="deep-dive-title" style="margin-bottom: 4px;">📖 과학적 특성 설명</div>
+          <p id="modal-desc"></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="modal-add-btn" class="btn-primary">비커에 이 시약 투입하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 스크립트 모듈 로드 -->
+  <script src="js/chemicals.js"></script>
+  <script src="js/reactions.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
