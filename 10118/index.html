@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-width=1.0">
+    <title>학교급식 영양 분석 프로그램</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --accent-green: #10B981;
+            --accent-orange: #F59E0B;
+            --accent-red: #EF4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,0.3) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,0.3) 0, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin-top: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        label {
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .search-wrapper {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            color: white;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .btn-add {
+            background-color: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn-add:hover {
+            background-color: #059669;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            min-height: 50px;
+            padding: 0.8rem;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 8px;
+            border: 1px dashed var(--border-color);
+        }
+        
+        .food-tag {
+            background: var(--primary);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 9999px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: scaleIn 0.2s ease;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .food-tag .remove-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .food-tag .remove-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-analyze {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-analyze:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-analyze:active {
+            transform: scale(0.98);
+        }
+
+        .results {
+            display: none;
+        }
+        
+        .results.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .color-kcal { color: #f43f5e; }
+        .color-carbs { color: var(--accent-orange); }
+        .color-protein { color: var(--primary); }
+        .color-fat { color: var(--accent-green); }
+
+        .menu-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .menu-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .menu-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .menu-nutrients {
+            display: flex;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.3rem 0.8rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>학교급식 영양 분석</h1>
+            <p class="subtitle">식약처 실제 데이터를 활용한 100g 당 칼로리 및 탄·단·지 분석</p>
+        </header>
+
+        <main>
+            <div class="glass-card">
+                <div class="input-group">
+                    <label for="food-search">식약처 통합식품 영양성분 정보 검색 (1.7만건 데이터)</label>
+                    <div class="search-wrapper">
+                        <input type="text" id="food-search" list="food-list" placeholder="음식 이름을 입력하고 엔터를 누르세요 (예: 흰죽)">
+                        <datalist id="food-list">
+                            <!-- JS에서 자동 채움 -->
+                        </datalist>
+                        <button id="add-btn" class="btn-add">추가</button>
+                    </div>
+                    
+                    <div id="selected-foods" class="tags-container">
+                        <span id="empty-msg" style="color: #64748b; font-size: 0.9rem; display: flex; align-items: center; margin: auto;">검색하여 식단을 구성해주세요.</span>
+                    </div>
+
+                    <button id="analyze-btn" class="btn-analyze">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        식단 분석하기
+                    </button>
+                </div>
+            </div>
+
+            <div class="loading glass-card" id="loading">
+                <div class="spinner"></div>
+                <p>식단의 영양 성분을 분석하고 있습니다...</p>
+            </div>
+
+            <div class="results glass-card" id="results">
+                <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;" id="summary-title">분석 결과 요약 (선택한 메뉴 총합)</h2>
+                
+                <div class="summary-grid">
+                    <div class="stat-card">
+                        <div class="stat-value color-kcal" id="total-kcal">0</div>
+                        <div class="stat-label">Kcal / 100g</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value color-carbs" id="total-carbs">0g</div>
+                        <div class="stat-label">탄수화물</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value color-protein" id="total-protein">0g</div>
+                        <div class="stat-label">단백질</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value color-fat" id="total-fat">0g</div>
+                        <div class="stat-label">지방</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 1rem; font-size: 1.2rem; color: #cbd5e1;">메뉴별 상세 분석 (100g 당)</h3>
+                <ul class="menu-list" id="menu-list">
+                    <!-- JS에서 렌더링 -->
+                </ul>
+            </div>
+        </main>
+    </div>
+
+    <!-- 파이썬으로 파싱한 1만 7천여개의 실제 데이터 -->
+    <script src="data.js"></script>
+    <script>
+        let selectedItems = [];
+        const dataList = document.getElementById('food-list');
+        const searchInput = document.getElementById('food-search');
+        const addBtn = document.getElementById('add-btn');
+        const tagsContainer = document.getElementById('selected-foods');
+
+        // 최적화를 위해 입력될 때마다 필터링하여 최대 100개만 표시
+        searchInput.addEventListener('input', function(e) {
+            const val = this.value.trim();
+            dataList.innerHTML = '';
+            if(val.length === 0) return;
+
+            let count = 0;
+            const fragment = document.createDocumentFragment();
+            for(let i=0; i<nutritionData.length; i++) {
+                if(nutritionData[i].name.includes(val)) {
+                    const option = document.createElement('option');
+                    option.value = nutritionData[i].name;
+                    fragment.appendChild(option);
+                    count++;
+                    if(count >= 100) break;
+                }
+            }
+            dataList.appendChild(fragment);
+        });
+
+        function addFood() {
+            const foodName = searchInput.value.trim();
+            if (!foodName) return;
+
+            const foodData = nutritionData.find(f => f.name === foodName);
+            
+            if (!foodData) {
+                alert('목록에 없는 음식입니다. 자동완성 목록에서 선택해주세요.');
+                return;
+            }
+
+            if (selectedItems.some(item => item.name === foodName)) {
+                alert('이미 추가된 음식입니다.');
+                searchInput.value = '';
+                return;
+            }
+
+            selectedItems.push(foodData);
+            renderTags();
+            searchInput.value = '';
+            dataList.innerHTML = ''; // 검색결과 초기화
+            
+            // 결과 창이 열려있다면 닫기
+            document.getElementById('results').classList.remove('active');
+        }
+
+        addBtn.addEventListener('click', addFood);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addFood();
+        });
+
+        window.removeFood = function(index) {
+            selectedItems.splice(index, 1);
+            renderTags();
+            // 결과 창 닫기
+            document.getElementById('results').classList.remove('active');
+        };
+
+        function renderTags() {
+            if (selectedItems.length === 0) {
+                tagsContainer.innerHTML = '<span id="empty-msg" style="color: #64748b; font-size: 0.9rem; display: flex; align-items: center; margin: auto;">검색하여 식단을 구성해주세요.</span>';
+                return;
+            }
+
+            tagsContainer.innerHTML = '';
+            selectedItems.forEach((item, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'food-tag';
+                tag.innerHTML = `
+                    ${item.name}
+                    <button class="remove-btn" onclick="removeFood(${index})">&times;</button>
+                `;
+                tagsContainer.appendChild(tag);
+            });
+        }
+
+        document.getElementById('analyze-btn').addEventListener('click', function() {
+            if(selectedItems.length === 0) {
+                alert('먼저 음식을 검색하여 추가해주세요!');
+                return;
+            }
+
+            // UI 업데이트: 로딩 표시
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('loading').classList.add('active');
+
+            setTimeout(() => {
+                analyzeMenu();
+            }, 800);
+        });
+
+        function analyzeMenu() {
+            const menuListEl = document.getElementById('menu-list');
+            menuListEl.innerHTML = '';
+            
+            let totalKcal = 0, totalC = 0, totalP = 0, totalF = 0;
+
+            selectedItems.forEach(item => {
+                totalKcal += item.kcal;
+                totalC += item.carbs;
+                totalP += item.protein;
+                totalF += item.fat;
+
+                const li = document.createElement('li');
+                li.className = 'menu-item';
+                li.innerHTML = `
+                    <div class="menu-name">${item.name}</div>
+                    <div class="menu-nutrients">
+                        <span class="badge color-kcal">${item.kcal.toFixed(1)} kcal</span>
+                        <span class="badge color-carbs">탄 ${item.carbs.toFixed(1)}g</span>
+                        <span class="badge color-protein">단 ${item.protein.toFixed(1)}g</span>
+                        <span class="badge color-fat">지 ${item.fat.toFixed(1)}g</span>
+                    </div>
+                `;
+                menuListEl.appendChild(li);
+            });
+
+            // 다이어트 목적이므로 전체 식단의 '합계'를 보여주는 것이 직관적
+            document.getElementById('total-kcal').innerText = totalKcal.toFixed(1);
+            document.getElementById('total-carbs').innerText = totalC.toFixed(1) + 'g';
+            document.getElementById('total-protein').innerText = totalP.toFixed(1) + 'g';
+            document.getElementById('total-fat').innerText = totalF.toFixed(1) + 'g';
+
+            // UI 업데이트: 결과 표시
+            document.getElementById('loading').classList.remove('active');
+            document.getElementById('results').classList.add('active');
+        }
+    </script>
+</body>
+</html>
