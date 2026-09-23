@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>와이파이 스팟 (WiFiSpot) - 내 주변 무료 공공 와이파이 지도</title>
+  <meta name="description" content="별도의 앱 설치 없이 내 현재 위치 주변의 무료 공공 와이파이를 지도에서 확인하고 거리순으로 정렬하여 찾아보세요. 도보 시간 및 SSID 바로 복사 제공.">
+  <meta name="keywords" content="공공와이파이, 무료와이파이, 와이파이지도, WiFiSpot, 공공WiFi, 주변와이파이">
+  <meta name="theme-color" content="#0b0f19">
+
+  <!-- Pretendard Web Font -->
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div id="app-container">
+    <!-- 좌측 사이드바 (모바일에서는 하단 바텀시트 역할) -->
+    <aside id="sidebar">
+      <!-- 모바일 드래그 핸들 -->
+      <div class="mobile-sheet-handle">
+        <div class="mobile-sheet-handle-bar"></div>
+      </div>
+
+      <!-- 상단 헤더 & 브랜딩 -->
+      <header class="app-header">
+        <div class="brand-wrapper">
+          <div class="brand-icon">
+            <i class="fa-solid fa-wifi"></i>
+          </div>
+          <div>
+            <div class="brand-title">
+              <span>WiFiSpot</span>
+              <span class="badge-free">FREE</span>
+            </div>
+            <div class="brand-subtitle">내 주변 공공 와이파이 찾기</div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button id="theme-toggle-btn" class="btn-icon" title="다크/라이트 모드 전환" aria-label="테마 전환">
+            <i class="fa-regular fa-sun"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- 컨트롤 패널 (검색 / 지역 / 내 위치 / 반경 / 카테고리) -->
+      <section class="controls-container">
+        <!-- 1. 키워드 검색창 -->
+        <div class="search-wrapper">
+          <input type="text" id="search-input" class="search-input" placeholder="장소명, 도시, 역이름 검색 (예: 해운대, 서울시청, 판교, 대전역)" autocomplete="off">
+          <button id="search-clear" class="search-clear-btn" aria-label="검색어 지우기">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <button id="search-submit" class="search-submit-btn" title="검색" aria-label="검색 실행">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+        </div>
+
+        <!-- 2. 전국 지역 바로가기 바 -->
+        <div class="region-filter-bar" id="region-chips">
+          <button class="region-chip active" data-region="all">전국 전체</button>
+          <button class="region-chip" data-region="seoul">서울</button>
+          <button class="region-chip" data-region="gyeonggi">경기/인천</button>
+          <button class="region-chip" data-region="busan">부산/경남</button>
+          <button class="region-chip" data-region="daegu">대구/경북</button>
+          <button class="region-chip" data-region="daejeon">대전/충청</button>
+          <button class="region-chip" data-region="gwangju">광주/전라</button>
+          <button class="region-chip" data-region="gangwon">강원</button>
+          <button class="region-chip" data-region="jeju">제주</button>
+        </div>
+
+        <!-- 3. 빠른 액션 (내 위치 탐색 & 반경 선택) -->
+        <div class="action-row">
+          <button id="btn-my-location" class="btn-primary-action" title="GPS로 현재 위치 찾기">
+            <i class="fa-solid fa-location-crosshairs"></i>
+            <span>내 위치 주변 찾기</span>
+          </button>
+
+          <div class="radius-select-wrap">
+            <select id="radius-select" class="radius-select" title="검색 반경 설정">
+              <option value="0" selected>전국 (전체)</option>
+              <option value="500">반경 500m</option>
+              <option value="1000">반경 1km</option>
+              <option value="3000">반경 3km</option>
+              <option value="5000">반경 5km</option>
+              <option value="10000">반경 10km</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 4. 카테고리 필터 칩 -->
+        <div class="category-filter-bar" id="category-chips">
+          <button class="category-chip active" data-category="all">
+            <i class="fa-solid fa-border-all"></i>
+            <span>전체</span>
+          </button>
+          <button class="category-chip" data-category="subway">
+            <i class="fa-solid fa-train-subway"></i>
+            <span>지하철/교통</span>
+          </button>
+          <button class="category-chip" data-category="public">
+            <i class="fa-solid fa-building-columns"></i>
+            <span>공공기관</span>
+          </button>
+          <button class="category-chip" data-category="library">
+            <i class="fa-solid fa-book-open"></i>
+            <span>도서관/학습</span>
+          </button>
+          <button class="category-chip" data-category="park">
+            <i class="fa-solid fa-tree"></i>
+            <span>공원/광장</span>
+          </button>
+          <button class="category-chip" data-category="tourist">
+            <i class="fa-solid fa-landmark"></i>
+            <span>관광/문화</span>
+          </button>
+          <button class="category-chip" data-category="welfare">
+            <i class="fa-solid fa-hands-holding-circle"></i>
+            <span>복지/편의</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- 정렬 옵션 및 건수 바 -->
+      <div class="list-meta-bar">
+        <div class="count-badge">
+          검색 결과 <strong id="search-count">0</strong>개
+        </div>
+        <div class="sort-options">
+          <button id="sort-distance" class="sort-btn active" title="가장 가까운 거리 순으로 정렬">
+            <i class="fa-solid fa-arrow-down-short-wide"></i> 거리순
+          </button>
+          <button id="sort-name" class="sort-btn" title="이름 가나다순으로 정렬">
+            <i class="fa-solid fa-arrow-down-a-z"></i> 이름순
+          </button>
+        </div>
+      </div>
+
+      <!-- 와이파이 스팟 카드 목록 영역 -->
+      <main id="wifi-list-container" class="wifi-list">
+        <!-- Javascript로 동적 렌더링 -->
+      </main>
+    </aside>
+
+    <!-- 우측 인터랙티브 지도 영역 -->
+    <section id="map-wrapper" aria-label="와이파이 지도">
+      <div id="map"></div>
+
+      <!-- 지도 위 플로팅 컨트롤 -->
+      <div class="map-floating-controls">
+        <div class="map-control-card">
+          <button id="btn-fab-location" class="btn-map-fab" title="내 위치로 이동" aria-label="내 위치">
+            <i class="fa-solid fa-location-crosshairs"></i>
+          </button>
+          <button id="btn-fit-bounds" class="btn-map-fab" title="모든 마커 한눈에 보기" aria-label="전체 마커 뷰">
+            <i class="fa-solid fa-expand"></i>
+          </button>
+        </div>
+
+        <div class="map-control-card">
+          <button id="btn-zoom-in" class="btn-map-fab" title="확대" aria-label="지도 확대">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+          <button id="btn-zoom-out" class="btn-map-fab" title="축소" aria-label="지도 축소">
+            <i class="fa-solid fa-minus"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 지도 하단 상태 필 (알림 배너) -->
+      <div id="map-status-pill" class="map-status-pill">
+        <span class="indicator-dot"></span>
+        <span>주변 공공 와이파이 탐색 중...</span>
+      </div>
+    </section>
+  </div>
+
+  <!-- 와이파이 상세 정보 모달 팝업 -->
+  <div id="detail-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="modal-title" style="font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-wifi" style="color: var(--primary);"></i> 공공 와이파이 상세 안내
+        </h2>
+        <button id="modal-close-btn" class="btn-icon" aria-label="닫기">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="modal-dynamic-content" class="modal-body">
+        <!-- JS로 동적 렌더링 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 토스트 알림 컨테이너 -->
+  <div id="toast-container"></div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Application Logic Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
