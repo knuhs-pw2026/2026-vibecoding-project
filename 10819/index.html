@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VibeTune (바이브튠) - 나만의 감성 맞춤 음악 & 실시간 유사곡 추천</title>
+  <meta name="description" content="단순 검색으로는 찾기 힘든 나만의 분위기, 감성, 스타일에 꼭 맞는 음악을 발견하고, 좋아요를 누를수록 취향을 학습하는 실시간 맞춤 음악 큐레이션 플랫폼">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar" id="mainNav">
+    <div class="brand" id="brandLogo">
+      <div class="brand-icon">🎵</div>
+      <div class="brand-title">VibeTune</div>
+      <span class="brand-badge">AI Discovery</span>
+    </div>
+
+    <!-- Live Search Input -->
+    <div class="search-wrapper">
+      <span class="search-icon">🔍</span>
+      <input 
+        type="text" 
+        id="searchInput" 
+        class="search-input" 
+        placeholder="어떤 감성을 찾으시나요? (예: 재즈, 비 오는 날, 로파이, 드라이브...)"
+        autocomplete="off"
+      >
+      <button id="searchClearBtn" class="search-clear-btn" title="검색어 지우기" style="display: none;">✕</button>
+    </div>
+
+    <!-- Actions -->
+    <div class="nav-actions">
+      <button class="btn btn-primary" id="openSurveyBtn">
+        <span>🎯</span>
+        <span>취향 진단 서베이</span>
+      </button>
+      <button class="btn btn-glass" id="openLibraryBtn">
+        <span>❤️</span>
+        <span>보관함</span>
+        <span class="badge-count" id="libraryCountBadge">0</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="hero-tag">✨ 감성 딥러닝 큐레이션 엔진</div>
+    <h1 class="hero-title">
+      단순 검색으론 찾기 힘들었던,<br>
+      <span>지금 내 마음에 꼭 맞는 음악</span>
+    </h1>
+    <p class="hero-desc">
+      "어떤 노래를 들어야 할지 모르겠거나, 특정한 분위기의 곡을 찾고 싶으신가요?"<br>
+      감성 키워드와 템포를 고르면 딱 맞는 곡을 추천해 드리고, 마음에 드는 곡에 <strong>좋아요(❤️)</strong>를 누르면 알고리즘이 취향을 분석해 찰떡인 유사곡을 실시간으로 띄워줍니다.
+    </p>
+
+    <!-- Quick Mood Selector Chips -->
+    <div class="quick-tags-container" id="quickTagsContainer">
+      <!-- Populated via JS -->
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="main-container">
+
+    <!-- Taste Profile Bar (Shown when user has liked songs) -->
+    <section class="taste-summary-bar" id="tasteSummaryBar" style="display: none;">
+      <div class="taste-stat-item">
+        <span class="taste-stat-label">분석된 음악 취향</span>
+        <div class="taste-stat-value" id="tasteSummaryText">
+          🎧 수집된 취향 데이터 기반
+        </div>
+      </div>
+      <div class="taste-stat-item">
+        <span class="taste-stat-label">어쿠스틱 감성도</span>
+        <div class="taste-stat-value">
+          <span id="acousticScoreText">0%</span>
+          <div class="taste-progress-wrap">
+            <div class="taste-progress-bar" id="acousticBar" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="taste-stat-item">
+        <span class="taste-stat-label">에너지 & 템포 텐션</span>
+        <div class="taste-stat-value">
+          <span id="energyScoreText">0%</span>
+          <div class="taste-progress-wrap">
+            <div class="taste-progress-bar" id="energyBar" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="taste-stat-item">
+        <span class="taste-stat-label">선호 감성 태그</span>
+        <div id="topTagsContainer" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 1: 실시간 알고리즘 유사곡 추천 (Dynamic Liked-based Recommender) -->
+    <section class="algorithm-recommendations-section" id="algorithmSection">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <div class="section-title">
+            <span>🔮</span>
+            <span>당신의 취향을 읽은 알고리즘 추천</span>
+            <span class="section-badge-algorithm">실시간 벡터 분석</span>
+          </div>
+          <p class="section-subtitle">
+            내가 좋아요(❤️)를 누른 곡들의 감성, BPM, 악기 구성을 심층 분석하여 발견한 맞춤형 유사 트랙입니다.
+          </p>
+        </div>
+      </div>
+
+      <!-- Empty state when no liked songs -->
+      <div class="algorithm-empty-box" id="algorithmEmptyState">
+        <div class="icon">💡</div>
+        <h4>아직 취향 데이터가 수집되지 않았습니다</h4>
+        <p>마음에 드는 노래 카드의 <strong>하트(❤️)</strong>나 <strong>저장(➕)</strong> 버튼을 눌러보세요. 알고리즘이 취향을 학습하여 즉시 유사곡을 찾아옵니다!</p>
+      </div>
+
+      <!-- Cards Grid for Algorithm Recommendations -->
+      <div class="cards-grid" id="algorithmCardsGrid" style="display: none;">
+        <!-- Populated dynamically via algorithm.js & app.js -->
+      </div>
+    </section>
+
+    <!-- SECTION 2: 감성 맞춤 추천 & 카탈로그 탐색 -->
+    <section class="recommendations-section" id="recommendationsSection">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <div class="section-title">
+            <span>✨</span>
+            <span id="recommendationHeading">감성 맞춤 추천 트랙</span>
+          </div>
+          <p class="section-subtitle" id="recommendationSubheading">
+            현재 선택된 무드와 스타일에 가장 잘 어울리는 큐레이션 리스트입니다.
+          </p>
+        </div>
+
+        <!-- Filter Reset Button (if filters applied) -->
+        <button class="btn btn-glass" id="resetFilterBtn" style="display: none;">
+          <span>🔄</span>
+          <span>필터 초기화</span>
+        </button>
+      </div>
+
+      <!-- Main Cards Grid -->
+      <div class="cards-grid" id="mainCardsGrid">
+        <!-- Populated via JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Sticky Bottom Audio Player -->
+  <footer class="music-player-bar" id="musicPlayer">
+    <!-- Left: Track Info -->
+    <div class="player-track-info">
+      <img id="playerThumb" src="" alt="Album Artwork" class="player-thumb">
+      <div class="player-text">
+        <span id="playerTitle" class="player-title">곡을 선택해주세요</span>
+        <span id="playerArtist" class="player-artist">VibeTune Player</span>
+      </div>
+    </div>
+
+    <!-- Center: Playback Controls & Progress Bar -->
+    <div class="player-controls-center">
+      <div class="player-buttons">
+        <button class="btn-ctrl" id="prevTrackBtn" title="이전 곡">⏮</button>
+        <button class="btn-ctrl btn-ctrl-main" id="playPauseBtn" title="재생/일시정지">▶</button>
+        <button class="btn-ctrl" id="nextTrackBtn" title="다음 곡">⏭</button>
+      </div>
+      <div class="player-timeline">
+        <span class="time-label" id="currentTimeLabel">0:00</span>
+        <div class="progress-bar-container" id="progressBarContainer">
+          <div class="progress-bar-fill" id="progressBarFill"></div>
+        </div>
+        <span class="time-label" id="totalTimeLabel">0:30</span>
+      </div>
+    </div>
+
+    <!-- Right: Visualizer & Volume -->
+    <div class="player-right-tools">
+      <!-- Real-time Web Audio Visualizer Canvas -->
+      <canvas id="audioVisualizerCanvas" width="120" height="38" title="실시간 오디오 이퀄라이저"></canvas>
+      <div class="volume-wrapper">
+        <span id="volumeIcon" style="cursor: pointer;">🔊</span>
+        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.05" value="0.8">
+      </div>
+    </div>
+  </footer>
+
+  <!-- Survey Modal (3-Step Wizard) -->
+  <div class="modal-overlay" id="surveyModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">🎯 나만의 감성 스타일 진단</h3>
+          <p class="modal-subtitle">단 3가지 질문으로 마음에 쏙 드는 분위기를 큐레이션합니다.</p>
+        </div>
+        <button class="modal-close-btn" id="closeSurveyBtn">✕</button>
+      </div>
+
+      <!-- Step Indicator -->
+      <div class="survey-step-indicator">
+        <div class="step-dot active" id="stepDot1"></div>
+        <div class="step-dot" id="stepDot2"></div>
+        <div class="step-dot" id="stepDot3"></div>
+      </div>
+
+      <!-- Step Container -->
+      <div id="surveyStepContent">
+        <!-- Rendered dynamically by step -->
+      </div>
+
+      <!-- Modal Footer Controls -->
+      <div class="modal-footer">
+        <button class="btn btn-glass" id="surveyPrevBtn" style="visibility: hidden;">이전</button>
+        <span id="surveyStepText" style="font-size: 13px; color: var(--text-dim);">1 / 3 단계</span>
+        <button class="btn btn-primary" id="surveyNextBtn">다음 단계</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Library Modal (Liked & Saved Songs) -->
+  <div class="modal-overlay" id="libraryModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">❤️ 내 감성 보관함</h3>
+          <p class="modal-subtitle">좋아요를 누른 곡들이 실시간 추천 알고리즘의 밑거름이 됩니다.</p>
+        </div>
+        <button class="modal-close-btn" id="closeLibraryBtn">✕</button>
+      </div>
+
+      <div class="library-track-list" id="libraryTrackList">
+        <!-- Rendered via JS -->
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-glass" id="clearLibraryBtn">보관함 전체 비우기</button>
+        <button class="btn btn-primary" id="playAllLibraryBtn">보관함 연속 재생</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="algorithm.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
