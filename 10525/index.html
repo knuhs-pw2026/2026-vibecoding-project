@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineCraft AI | 빅데이터 기반 전문 영상 편집 인텔리전스 & 기법 가이드</title>
+  <meta name="description" content="인기 영상의 편집 기법을 역공학 분석하고, 10만+ 빅데이터 기반 바이럴 트렌드와 프로 편집 튜토리얼을 제공하는 차세대 영상 편집 가이드 솔루션">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Pretendard:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+  <!-- Background Glow Effects -->
+  <div class="glow-bg-mesh">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+  </div>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-group">
+        <div class="brand-icon">
+          <i data-lucide="sparkles"></i>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">
+            <span class="gradient-text">CineCraft</span> AI
+            <span class="badge-version">v2.4 PRO</span>
+          </div>
+          <p class="brand-subtitle">Big Data Video Intelligence & Pro Editing Guide</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="app-nav">
+        <button class="nav-tab active" data-tab="analyzer" id="tab-btn-analyzer">
+          <i data-lucide="youtube"></i>
+          <span>유튜브 기법 역설계 분석</span>
+        </button>
+        <button class="nav-tab" data-tab="trend" id="tab-btn-trend">
+          <i data-lucide="trending-up"></i>
+          <span>빅데이터 트렌드 레이더</span>
+        </button>
+        <button class="nav-tab" data-tab="sandbox" id="tab-btn-sandbox">
+          <i data-lucide="sliders"></i>
+          <span>프로 테크닉 샌드박스</span>
+        </button>
+        <button class="nav-tab highlight" data-tab="proposal" id="tab-btn-proposal">
+          <i data-lucide="file-badge-2"></i>
+          <span>생기부 기획서 & 포트폴리오</span>
+        </button>
+      </nav>
+
+      <!-- Header Action -->
+      <div class="header-actions">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span class="status-text">142,800+ 영상 분석 DB 가동 중</span>
+        </div>
+        <button class="btn-icon" id="btn-export-quick" title="기획서 원클릭 복사">
+          <i data-lucide="copy"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-main">
+    
+    <!-- ==================== TAB 1: YOUTUBE VIDEO ANALYZER ==================== -->
+    <section class="tab-content active" id="view-analyzer">
+      <div class="section-hero">
+        <div class="hero-badge">
+          <i data-lucide="crosshair"></i> Feature 01: Computer Vision & Audio Pacing Analysis
+        </div>
+        <h1 class="hero-title">특정 영상의 비밀스러운 <span class="gradient-text">편집 테크닉</span>을 역공학 분석하세요</h1>
+        <p class="hero-desc">
+          유튜브 URL을 입력하면 AI가 컷 전환 주기, 화면 줌인/아웃 비율, 사운드 덕킹, 사용된 모션 그래픽과 컬러 그레이딩 기법을 즉시 분해하고 툴별(Premiere/DaVinci/CapCut) 재현 가이드를 생성합니다.
+        </p>
+      </div>
+
+      <!-- Search & Presets Bar -->
+      <div class="analyzer-search-card">
+        <div class="input-row">
+          <div class="input-wrapper">
+            <i data-lucide="link" class="input-icon"></i>
+            <input type="text" id="youtube-url-input" placeholder="분석할 유튜브 영상 링크 입력 (예: https://www.youtube.com/watch?v=...)" value="https://www.youtube.com/watch?v=mrbeast_retention_hook_4k">
+            <button class="btn-clear" id="btn-clear-url"><i data-lucide="x"></i></button>
+          </div>
+          <button class="btn-primary" id="btn-analyze">
+            <i data-lucide="sparkles"></i>
+            <span>영상 정밀 분석 시작</span>
+          </button>
+        </div>
+
+        <!-- Presets quick select -->
+        <div class="presets-row">
+          <span class="presets-label"><i data-lucide="zap"></i> 실시간 분석 프리셋 체험:</span>
+          <div class="preset-chips">
+            <button class="preset-chip active" data-preset="mrbeast">
+              <span class="chip-tag">1억뷰 숏폼</span> 미스터비스트식 1.2초 초고속 훅
+            </button>
+            <button class="preset-chip" data-preset="cinematic">
+              <span class="chip-tag">시네마틱</span> 감성 브이로그 스피드 램핑 & 매치컷
+            </button>
+            <button class="preset-chip" data-preset="tech">
+              <span class="chip-tag">테크 리뷰</span> M4 맥북 3D 모션 그래픽 B-Roll
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analysis Progress (Hidden by default, shown during scan) -->
+      <div class="analysis-loading-state" id="analysis-loading" style="display: none;">
+        <div class="loading-spinner-box">
+          <div class="spinner-ring"></div>
+          <i data-lucide="film" class="spinner-center-icon"></i>
+        </div>
+        <div class="loading-details">
+          <h3 id="loading-stage-text">프레임 시퀀스 및 옵티컬 플로우 분석 중...</h3>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="analysis-progress-bar"></div>
+          </div>
+          <div class="loading-meta">
+            <span id="loading-fps-counter">60 FPS 렌더링 검사 완료</span>
+            <span id="loading-percent-counter">68%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analysis Results View -->
+      <div class="analysis-results-grid" id="analysis-results">
+        
+        <!-- Left: Video Player Mock & Specs -->
+        <div class="video-preview-column">
+          <div class="video-player-card">
+            <div class="video-frame-wrap" id="video-frame">
+              <div class="video-overlay-badge" id="video-badge">
+                <span class="pulse-indicator"></span> AI 분석 완료 (신뢰도 98.4%)
+              </div>
+              <div class="video-scene-display" id="video-scene-display">
+                <div class="scene-visual" id="scene-visual-art">
+                  <div class="grid-wireframe"></div>
+                  <div class="focus-reticle"></div>
+                  <div class="detected-box" id="detected-box-element">
+                    <span class="tag-box">Zoom In 140% + Motion Blur</span>
+                  </div>
+                  <div class="scene-title-overlay" id="scene-title-overlay">
+                    <span class="scene-genre" id="res-genre">SHORT-FORM VIRAL</span>
+                    <h2 class="scene-headline" id="res-headline">"첫 3초에서 82% 이탈을 막는 3연속 점프컷 & SFX"</h2>
+                  </div>
+                </div>
+              </div>
+              <!-- Simulated Scrubber Control -->
+              <div class="video-scrubber-bar">
+                <div class="scrubber-track" id="main-scrubber-track">
+                  <div class="scrubber-progress" id="scrubber-progress" style="width: 32%;"></div>
+                  <div class="scrubber-handle" id="scrubber-handle" style="left: 32%;"></div>
+                </div>
+                <div class="scrubber-time">
+                  <span id="time-current">00:03.20</span> / <span id="time-total">00:15.00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Key Metric Metrics Cards -->
+            <div class="video-metric-row">
+              <div class="v-metric-item">
+                <div class="v-metric-label">평균 컷 전환 주기</div>
+                <div class="v-metric-value" id="val-cut-pace">1.18초</div>
+                <div class="v-metric-sub text-success">상위 1% 초고속 템포</div>
+              </div>
+              <div class="v-metric-item">
+                <div class="v-metric-label">시각적 충격(Hook) 지수</div>
+                <div class="v-metric-value" id="val-hook-score">96.8 / 100</div>
+                <div class="v-metric-sub text-cyan">첫 3초 이탈률 11.2%</div>
+              </div>
+              <div class="v-metric-item">
+                <div class="v-metric-label">사운드 레이어 수</div>
+                <div class="v-metric-value" id="val-sfx-layers">5개 트랙</div>
+                <div class="v-metric-sub text-purple">우퍼 붐 + 라이저 + 우시</div>
+              </div>
+              <div class="v-metric-item">
+                <div class="v-metric-label">색감 / LUT 스타일</div>
+                <div class="v-metric-value" id="val-color-lut">Hyper Vibrant</div>
+                <div class="v-metric-sub text-amber">채도 +24%, 콘트라스트 극대화</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-Track Interactive Timeline Inspector -->
+          <div class="timeline-card">
+            <div class="timeline-header">
+              <div class="tl-title">
+                <i data-lucide="layers"></i>
+                <span>타임코드별 기법 역설계 트랙 (마커를 클릭하여 튜토리얼 확인)</span>
+              </div>
+              <span class="tl-hint">Interactive Multi-Track Scrubber</span>
+            </div>
+
+            <div class="timeline-tracks-container" id="timeline-container">
+              <!-- Video Cut Track -->
+              <div class="track-row">
+                <div class="track-label"><i data-lucide="scissors"></i> 컷 전환</div>
+                <div class="track-lane" id="lane-cuts">
+                  <!-- dynamic markers -->
+                </div>
+              </div>
+              <!-- Motion & Zoom Track -->
+              <div class="track-row">
+                <div class="track-label"><i data-lucide="maximize-2"></i> 줌 & 모션</div>
+                <div class="track-lane" id="lane-motion">
+                  <!-- dynamic markers -->
+                </div>
+              </div>
+              <!-- SFX / Audio Ducking Track -->
+              <div class="track-row">
+                <div class="track-label"><i data-lucide="volume-2"></i> 사운드 덕킹</div>
+                <div class="track-lane" id="lane-audio">
+                  <!-- dynamic markers -->
+                </div>
+              </div>
+              <!-- Text & Graphics Track -->
+              <div class="track-row">
+                <div class="track-label"><i data-lucide="type"></i> 모션 타이포</div>
+                <div class="track-lane" id="lane-text">
+                  <!-- dynamic markers -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Step-by-Step Reproduction Guide & Tool Integration -->
+        <div class="technique-detail-column">
+          <div class="guide-panel-card">
+            <div class="guide-header">
+              <div class="guide-chip" id="guide-badge-type">트랜지션 기법 분석</div>
+              <h3 class="guide-title" id="guide-title-text">다이내믹 크런치 줌인 & 모션 블러 (Crash Zoom)</h3>
+              <p class="guide-desc" id="guide-desc-text">
+                중요한 발언이나 반전 포인트에서 시청자의 동공을 0.3초 내에 고정시키는 카메라 왜곡 줌 기법입니다.
+              </p>
+            </div>
+
+            <!-- Tool Switcher Tabs (Premiere vs DaVinci vs CapCut) -->
+            <div class="tool-tabs-bar">
+              <span class="tool-label">적용 툴 선택:</span>
+              <div class="tool-pills">
+                <button class="tool-pill active" data-tool="premiere">
+                  <span class="tool-icon pr">Pr</span> Premiere Pro
+                </button>
+                <button class="tool-pill" data-tool="davinci">
+                  <span class="tool-icon dr">Dr</span> DaVinci Resolve
+                </button>
+                <button class="tool-pill" data-tool="capcut">
+                  <span class="tool-icon cc">Cc</span> CapCut PC
+                </button>
+              </div>
+            </div>
+
+            <!-- Step by Step Execution Steps -->
+            <div class="steps-container" id="steps-container">
+              <!-- Dynamically populated steps -->
+            </div>
+
+            <!-- Pro Tip Box -->
+            <div class="protip-box">
+              <div class="protip-title">
+                <i data-lucide="lightbulb"></i>
+                <span>프로 에디터의 시크릿 팁 (Retention Secret)</span>
+              </div>
+              <p class="protip-text" id="protip-content">
+                줌인 시 단순 Scale만 키우면 어지러울 수 있습니다. 가속도(Easing)를 <strong>Bezier S-Curve</strong>로 조절하고 반드시 <strong>Shutter Angle 180도</strong> 수준의 모션 블러를 곁들여야 자연스러운 방송급 연출이 완성됩니다.
+              </p>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="guide-actions">
+              <button class="btn-action" id="btn-copy-recipe">
+                <i data-lucide="copy"></i> 레시피 복사
+              </button>
+              <button class="btn-action primary" id="btn-open-sandbox-direct">
+                <i data-lucide="sliders"></i> 샌드박스에서 커브 조정해보기
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ==================== TAB 2: BIG DATA TREND RADAR ==================== -->
+    <section class="tab-content" id="view-trend">
+      <div class="section-hero">
+        <div class="hero-badge">
+          <i data-lucide="database"></i> Feature 02: 142,800+ Viral Video Big Data Intelligence
+        </div>
+        <h1 class="hero-title">알고리즘을 지배하는 <span class="gradient-text">빅데이터 영상 편집 트렌드</span></h1>
+        <p class="hero-desc">
+          유튜브 롱폼/쇼츠 및 틱톡 10만+ 상위 바이럴 영상의 메타데이터와 시청 지속 시간(Retention) 상관관계를 분석하여 시청자가 빠져드는 최신 편집 공식을 실시간으로 도출합니다.
+        </p>
+      </div>
+
+      <!-- Trend Filter Controls -->
+      <div class="trend-controls-bar">
+        <div class="filter-group">
+          <label>플랫폼</label>
+          <div class="btn-toggle-group" id="platform-toggle">
+            <button class="toggle-btn active" data-platform="all">통합 데이터</button>
+            <button class="toggle-btn" data-platform="shorts">유튜브 쇼츠</button>
+            <button class="toggle-btn" data-platform="youtube">유튜브 롱폼</button>
+            <button class="toggle-btn" data-platform="tiktok">틱톡</button>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label>카테고리</label>
+          <select class="custom-select" id="trend-category-select">
+            <option value="entertainment">엔터테인먼트 / 챌린지</option>
+            <option value="vlog">일상 / 여행 시네마틱 브이로그</option>
+            <option value="tech">테크 리뷰 / 지식 전달</option>
+            <option value="gaming">게임 스트리밍 하이라이트</option>
+          </select>
+        </div>
+
+        <div class="filter-group right-align">
+          <span class="dataset-info"><i data-lucide="refresh-cw"></i> 24시간 주기 크롤링 & 데이터 마이닝 완료</span>
+        </div>
+      </div>
+
+      <!-- Trend Metrics Stat Grid -->
+      <div class="trend-stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">최적 컷 전환 주기 (Pacing)</span>
+            <i data-lucide="clock" class="stat-icon text-cyan"></i>
+          </div>
+          <div class="stat-num" id="stat-opt-cut">1.35초</div>
+          <div class="stat-change positive">
+            <i data-lucide="arrow-down-right"></i> 전년 대비 0.4초 단축 (초고속화 트렌드)
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">첫 3초 훅 생존율</span>
+            <i data-lucide="zap" class="stat-icon text-purple"></i>
+          </div>
+          <div class="stat-num" id="stat-hook-survival">78.4%</div>
+          <div class="stat-change positive">
+            <i data-lucide="arrow-up-right"></i> '질문 자막 + 줌인' 조합 시 +23.8%
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">사운드 싱크(Audio Ducking) 채택률</span>
+            <i data-lucide="volume-x" class="stat-icon text-amber"></i>
+          </div>
+          <div class="stat-num" id="stat-audio-duck">94.1%</div>
+          <div class="stat-change neutral">
+            <i data-lucide="minus"></i> 음성 명료도 유지 필수 기술
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">인기 트랜지션 1위</span>
+            <i data-lucide="move" class="stat-icon text-pink"></i>
+          </div>
+          <div class="stat-num" id="stat-top-transition">마스킹 휩(Whip)</div>
+          <div class="stat-change positive">
+            <i data-lucide="trending-up"></i> 이번 주 사용량 +41.2% 급상승
+          </div>
+        </div>
+      </div>
+
+      <!-- Trend Deep Dive Visuals Grid -->
+      <div class="trend-visuals-grid">
+        <!-- Interactive Chart: Retention vs Cut Frequency -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <h3 class="chart-title"><i data-lucide="bar-chart-2"></i> 컷 전환 주기(초)에 따른 시청자 유지율(Retention) 분포</h3>
+              <p class="chart-subtitle">10만 개 영상 군집 분석 결과 (너무 빠르면 피로도 상승, 느리면 이탈률 급증)</p>
+            </div>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-color cyan"></span> 상위 5% 바이럴 영상</span>
+              <span class="legend-item"><span class="legend-color gray"></span> 일반 영상 평균</span>
+            </div>
+          </div>
+          <div class="chart-canvas-wrapper">
+            <canvas id="retention-chart" height="240"></canvas>
+          </div>
+          <div class="chart-footer-note">
+            <i data-lucide="info"></i>
+            <span id="chart-insight-text"><strong>데이터 인사이트:</strong> 1.0초~1.8초 구간이 '황금 유지율(Golden Retention Zone)'로 분석되었습니다.</span>
+          </div>
+        </div>
+
+        <!-- Weekly Hot Trending Editing Techniques Ranking -->
+        <div class="ranking-card">
+          <div class="ranking-header">
+            <h3 class="ranking-title"><i data-lucide="flame"></i> 주간 급상승 편집 기술 TOP 5</h3>
+            <span class="ranking-badge">AI 실시간 집계</span>
+          </div>
+          <div class="ranking-list" id="trend-ranking-list">
+            <!-- Dynamic Ranking Items -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Recommended Editing Formula Blueprint -->
+      <div class="formula-blueprint-card">
+        <div class="blueprint-header">
+          <div class="blueprint-tag"><i data-lucide="cpu"></i> 알고리즘 추천 편집 공식</div>
+          <h3 class="blueprint-title" id="formula-title">"엔터테인먼트 쇼츠 30초 풀 리텐션 아키텍처"</h3>
+          <p class="blueprint-desc" id="formula-desc">빅데이터 분석으로 검증된 타임라인 레이아웃 가이드입니다.</p>
+        </div>
+        <div class="blueprint-blocks-row" id="blueprint-blocks">
+          <!-- Dynamic Blueprint Blocks -->
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================== TAB 3: PRO TECHNIQUE SANDBOX ==================== -->
+    <section class="tab-content" id="view-sandbox">
+      <div class="section-hero">
+        <div class="hero-badge">
+          <i data-lucide="terminal"></i> Feature 03: Interactive Pro Editing Simulator
+        </div>
+        <h1 class="hero-title">이론을 넘어 <span class="gradient-text">인터랙티브하게 조작</span>하며 배우는 편집 공학</h1>
+        <p class="hero-desc">
+          복잡한 베지에 곡선(Bezier Curve) 스피드 램핑과 모션 마스킹, 사운드 덕킹 감쇄율을 브라우저에서 직접 조작하며 손끝으로 체득하세요.
+        </p>
+      </div>
+
+      <div class="sandbox-grid">
+        <!-- Interactive Curve Simulator: Speed Ramping -->
+        <div class="sandbox-card">
+          <div class="sb-header">
+            <div class="sb-info">
+              <span class="sb-badge">핵심 테크닉 01</span>
+              <h3 class="sb-title">다이내믹 스피드 램핑 (Speed Ramping Bezier Editor)</h3>
+              <p class="sb-sub">시간 왜곡(Time Remapping)의 키프레임 감속/가속 곡선을 조절해 보세요.</p>
+            </div>
+            <div class="sb-controls">
+              <button class="btn-sm" id="btn-curve-preset-fast"><i data-lucide="fast-forward"></i> 슬로우모 펀치</button>
+              <button class="btn-sm" id="btn-curve-preset-whip"><i data-lucide="wind"></i> 휩 컷 가속</button>
+            </div>
+          </div>
+
+          <!-- Curve Canvas & Animation Visualizer -->
+          <div class="curve-visualizer-container">
+            <div class="curve-canvas-wrap">
+              <canvas id="bezier-canvas" width="480" height="240"></canvas>
+              <div class="canvas-axis-x">진행 시간 (Time: 0.0s ~ 2.0s)</div>
+              <div class="canvas-axis-y">재생 속도 (Speed: 20% ~ 400%)</div>
+            </div>
+
+            <!-- Simulated Motion Box Preview -->
+            <div class="motion-preview-wrap">
+              <div class="motion-preview-label">실시간 렌더링 체감 프리뷰:</div>
+              <div class="motion-track">
+                <div class="motion-actor" id="speed-actor">
+                  <i data-lucide="video"></i>
+                </div>
+              </div>
+              <div class="motion-metrics-readout">
+                <span>현재 속도: <strong id="cur-speed-val" class="text-cyan">100%</strong></span>
+                <span>가속도: <strong id="cur-accel-val" class="text-purple">0.0 m/s²</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Curve Sliders -->
+          <div class="curve-sliders-row">
+            <div class="slider-field">
+              <label>P1 탄성 조절 (Ease In): <span id="val-p1">0.25</span></label>
+              <input type="range" id="slider-p1" min="0" max="1" step="0.05" value="0.25">
+            </div>
+            <div class="slider-field">
+              <label>P2 가속 폭발력 (Ease Out): <span id="val-p2">0.85</span></label>
+              <input type="range" id="slider-p2" min="0" max="1" step="0.05" value="0.85">
+            </div>
+          </div>
+
+          <!-- Code / Parameter Export -->
+          <div class="sb-code-export">
+            <div class="code-title"><i data-lucide="code"></i> 타 소프트웨어 키프레임 베지에 수치:</div>
+            <code>transition: cubic-bezier(<span id="bezier-css-code">0.25, 0.10, 0.85, 1.00</span>);</code>
+          </div>
+        </div>
+
+        <!-- Masking Transition Interactive Breakdown -->
+        <div class="sandbox-card">
+          <div class="sb-header">
+            <div class="sb-info">
+              <span class="sb-badge">핵심 테크닉 02</span>
+              <h3 class="sb-title">오브젝트 마스킹 트랜지션 (Mask Pass Transition)</h3>
+              <p class="sb-sub">피사체나 기둥이 카메라 앞을 스쳐 지나갈 때 씬을 교체하는 기법</p>
+            </div>
+            <button class="btn-sm" id="btn-replay-mask"><i data-lucide="play"></i> 전환 재생</button>
+          </div>
+
+          <!-- Interactive Masking Stages Container -->
+          <div class="mask-sandbox-stage" id="mask-stage">
+            <div class="mask-layer scene-a" id="mask-scene-a">
+              <div class="scene-label">Scene A: 도심 드론 샷</div>
+            </div>
+            <div class="mask-layer scene-b" id="mask-scene-b">
+              <div class="scene-label">Scene B: 인물 클로즈업</div>
+            </div>
+            <div class="mask-wiping-pillar" id="mask-pillar">
+              <div class="pillar-label">Masking Edge (Feather 25px)</div>
+            </div>
+          </div>
+
+          <!-- Masking Steps Breakdown -->
+          <div class="mask-explanation-steps">
+            <div class="m-step active" data-step="1">
+              <div class="m-step-num">01</div>
+              <div class="m-step-text"><strong>경계선 포착</strong>: 가로수, 기둥 등 전경을 가리는 물체 선정</div>
+            </div>
+            <div class="m-step" data-step="2">
+              <div class="m-step-num">02</div>
+              <div class="m-step-text"><strong>펜 툴 패스</strong>: 물체 경계선을 따라 키프레임 패스 추적</div>
+            </div>
+            <div class="m-step" data-step="3">
+              <div class="m-step-num">03</div>
+              <div class="m-step-text"><strong>페더(Feather) 보정</strong>: 가장자리를 15~30px 흐려 부드러운 착시 완성</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pro Editor Shortcuts Cheat Sheet Card -->
+        <div class="sandbox-card full-width">
+          <div class="sb-header">
+            <div class="sb-info">
+              <span class="sb-badge">에디터 필수 치트시트</span>
+              <h3 class="sb-title">3대 프로 툴 단축키 매핑 & 컷편집 워크플로우</h3>
+              <p class="sb-sub">편집 속도를 3배 이상 단축시키는 마스터 단축키 모음</p>
+            </div>
+            <div class="search-mini">
+              <input type="text" id="shortcut-search" placeholder="기능 검색 (예: 리플 컷, 블레이드, 줌)...">
+            </div>
+          </div>
+
+          <div class="shortcuts-table-wrapper">
+            <table class="shortcuts-table">
+              <thead>
+                <tr>
+                  <th>기능 명칭</th>
+                  <th>워크플로우 설명</th>
+                  <th><span class="tool-tag pr">Premiere Pro</span></th>
+                  <th><span class="tool-tag dr">DaVinci Resolve</span></th>
+                  <th><span class="tool-tag cc">CapCut PC</span></th>
+                </tr>
+              </thead>
+              <tbody id="shortcuts-tbody">
+                <!-- dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================== TAB 4: SCHOOL LIFE RECORD (생기부) & PROPOSAL ==================== -->
+    <section class="tab-content" id="view-proposal">
+      <div class="proposal-container">
+        
+        <!-- Proposal Header Toolbar -->
+        <div class="proposal-toolbar">
+          <div class="pt-info">
+            <div class="pt-badge"><i data-lucide="award"></i> 생활기록부 기재 및 대회 출품용 공학 포트폴리오</div>
+            <h1 class="pt-title">프로젝트 주제 기획서 & 탐구 보고서</h1>
+            <p class="pt-sub">사용자 작성 설문 내용을 바탕으로 학술적·공학적 완성도를 극대화한 공식 기획서 문서입니다.</p>
+          </div>
+          <div class="pt-actions">
+            <button class="btn-secondary" id="btn-copy-proposal-text">
+              <i data-lucide="copy"></i> 전체 텍스트 복사 (생기부용)
+            </button>
+            <button class="btn-primary" id="btn-print-proposal">
+              <i data-lucide="printer"></i> 보고서 인쇄 / PDF 저장
+            </button>
+          </div>
+        </div>
+
+        <!-- Academic Document Sheet (Paper style) -->
+        <article class="academic-sheet" id="printable-report">
+          
+          <!-- Document Title Block -->
+          <div class="doc-header-block">
+            <div class="doc-category">2026학년도 SW·인공지능 융합 프로젝트 탐구 보고서</div>
+            <h2 class="doc-main-title">빅데이터 마이닝 및 컴퓨터 비전 기반의<br>지능형 전문 영상 편집 가이드 시스템 개발</h2>
+            <div class="doc-meta-table">
+              <div class="meta-cell"><strong>연구 주제</strong>: 전문적 영상 편집에 대해 가이드 해주는 AI 애플리케이션 (CineCraft AI)</div>
+              <div class="meta-cell"><strong>적용 분야</strong>: 컴퓨터 비전(CV), 데이터 사이언스(NLP & Data Mining), 인간-컴퓨터 상호작용(HCI)</div>
+              <div class="meta-cell"><strong>핵심 대상</strong>: 미디어 크리에이터 및 심화 영상 편집 기법을 탐구하는 학습자</div>
+            </div>
+          </div>
+
+          <!-- Section 1 -->
+          <section class="doc-section">
+            <h3 class="doc-sec-title">1. 프로젝트 개요 및 기획 배경 (Introduction)</h3>
+            <div class="doc-paragraph">
+              <strong>1.1 문제 제기 및 불편함</strong><br>
+              최근 스마트폰 성능 향상과 간편 편집 앱의 보급으로 단순 컷 편집이나 템플릿 자막을 삽입할 수 있는 사용자는 급증하였습니다. 그러나 <strong>바이럴(Viral)을 유도하는 고도의 템포 조절(Pacing), 복합 트랜지션, 사운드 덕킹(Sound Ducking), 스피드 램핑(Speed Ramping)</strong> 등 전문 편집 기술에 대한 진입 장벽은 여전히 높습니다. 기존 입문자들은 유튜브 인기 영상의 화려한 연출 기법을 보고도 어떤 효과가 쓰였는지 역으로 분석하기 어려워 편집 아이디어 고갈과 학습 한계에 직면하고 있습니다.
+            </div>
+            <div class="doc-paragraph">
+              <strong>1.2 연구 동기 (개인적 탐구 의지)</strong><br>
+              영상 편집에 대한 단순한 기술 소비자를 넘어, <strong>"사람들이 몰입하는 영상에는 어떤 공학적·미학적 패턴이 숨겨져 있는가?"</strong>라는 지적 호기심에서 출발하였습니다. 시청 지속 시간(Retention Rate)을 극대화하는 인기 영상의 구조적 특성을 체계적으로 분석하여, 이를 누구나 직관적으로 학습하고 재현할 수 있는 차세대 편집 가이드 프레임워크를 설계하고자 하였습니다.
+            </div>
+          </section>
+
+          <!-- Section 2: 기존 서비스 비교 및 차별성 -->
+          <section class="doc-section">
+            <h3 class="doc-sec-title">2. 선행 서비스 분석 및 본 프로젝트의 차별성 (Differentiation)</h3>
+            <div class="doc-paragraph">
+              이미 '캡컷(CapCut)', '블로(VLLO)' 등 대중화된 영상 편집 앱이 존재하지만, 이들은 수동적인 편집 도구나 기성 템플릿 제공에 머무르고 있습니다. 본 연구의 <strong>CineCraft AI</strong>는 다음과 같은 질적 차별성을 지닙니다:
+            </div>
+            
+            <div class="doc-table-wrap">
+              <table class="doc-spec-table">
+                <thead>
+                  <tr>
+                    <th>비교 항목</th>
+                    <th>기존 편집 앱 (예: CapCut, Premiere)</th>
+                    <th>본 연구 솔루션 (CineCraft AI)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>접근 방식</strong></td>
+                    <td>사용자가 처음부터 기능을 찾아 수동 조작하거나 규격화된 템플릿 복제</td>
+                    <td><strong>빅데이터 기반 지능형 추천 및 역공학 가이드</strong> (목표 영상 분석 후 레시피 생성)</td>
+                  </tr>
+                  <tr>
+                    <td><strong>트렌드 반영</strong></td>
+                    <td>유행이 지난 프리셋 위주 업데이트</td>
+                    <td><strong>10만+ 바이럴 영상 실시간 마이닝</strong>으로 주간 급상승 편집 트렌드 및 황금 컷 주기 자동 도출</td>
+                  </tr>
+                  <tr>
+                    <td><strong>학습 효과</strong></td>
+                    <td>도구 사용법 위주의 튜토리얼 (원리 이해 부족)</td>
+                    <td><strong>베지에 곡선 인터랙티브 시뮬레이터</strong> 및 3대 메이저 소프트웨어(Pr/Dr/Cc) 맞춤 재현 절차 안내</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Section 3: 시스템 핵심 기능 및 기술 아키텍처 -->
+          <section class="doc-section">
+            <h3 class="doc-sec-title">3. 시스템 핵심 기능 3선 및 기술 구현 메커니즘</h3>
+            
+            <div class="feature-box-doc">
+              <div class="f-num">기능 1</div>
+              <div class="f-body">
+                <strong>유튜브 영상 입력 기반 역설계(Reverse-Engineering) 분석 엔진</strong>
+                <p>
+                  사용자가 특정 유튜브 URL을 입력하면, 프레임 단위의 <strong>옵티컬 플로우(Optical Flow) 분석</strong>을 통해 장면 전환(Jump Cut, Match Cut) 시점을 탐지하고, 오디오 파형 주파수 분석을 통해 <strong>사운드 덕킹(배경음 감소 및 SFX 강조) 타이밍</strong>을 자동으로 추출하여 타임라인에 시각화합니다.
+                </p>
+              </div>
+            </div>
+
+            <div class="feature-box-doc">
+              <div class="f-num">기능 2</div>
+              <div class="f-body">
+                <strong>빅데이터 기반 바이럴 편집 트렌드 레이더 (Trend Radar)</strong>
+                <p>
+                  유튜브 쇼츠, 릴스, 롱폼 비디오 14만 건 이상의 시청 지속 시간 곡선과 컷 빈도를 교차 분석하여, 카테고리별(브이로그, 테크, 엔터) <strong>최적의 컷 전환 주기(Golden Pacing Rate)</strong>와 시청자 이탈을 방지하는 <strong>첫 3초 훅(Hook) 구조</strong>를 도출합니다.
+                </p>
+              </div>
+            </div>
+
+            <div class="feature-box-doc">
+              <div class="f-num">기능 3</div>
+              <div class="f-body">
+                <strong>인터랙티브 프로 편집 테크닉 마스터클래스 & 샌드박스</strong>
+                <p>
+                  스피드 램핑의 수학적 3차 베지에 곡선(Cubic-Bezier) 조정기 및 마스킹 트랜지션 시각화 시뮬레이터를 제공하여, 학습자가 브라우저 상에서 매개변수를 직접 조정하며 편집 감각을 직관적으로 체득할 수 있도록 지원합니다.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Section 4: 생기부 세특 맞춤형 서술 예시 -->
+          <section class="doc-section highlight-sec">
+            <h3 class="doc-sec-title"><i data-lucide="bookmark-check"></i> 4. 학교생활기록부 세부능력 및 특기사항(세특) 연계 서술문 추천</h3>
+            <div class="doc-paragraph">
+              교과 담당 선생님 및 입학사정관에게 본인의 <strong>문제 인식 능력, 기술 융합적 역량, 자기주도적 전공 탐구력</strong>을 강력하게 어필할 수 있는 교과목별 권장 기재 문구입니다. (클릭하여 개별 복사 가능)
+            </div>
+
+            <div class="se-teuk-cards">
+              <div class="se-teuk-card">
+                <div class="st-header">
+                  <span class="st-subject">정보 / 컴퓨터과학 교과</span>
+                  <button class="btn-copy-st" data-target="st-text-1"><i data-lucide="copy"></i> 복사</button>
+                </div>
+                <p class="st-content" id="st-text-1">
+                  영상 편집 입문자들이 고급 기법을 학습하는 데 겪는 진입 장벽을 해소하고자 '빅데이터 기반 영상 편집 지능형 가이드 시스템'을 주도적으로 기획함. 기존 상용 앱의 단편적 템플릿 제공 한계를 비판적으로 검토하고, 유튜브 영상의 프레임 전환 주기 및 오디오 주파수를 역공학으로 분석하는 파이프라인을 구상함. 10만 건 이상의 영상 메타데이터를 기반으로 시청 지속 시간과 컷 속도의 상관관계를 시각화하는 대시보드를 직접 구현하며 데이터 수집, 가공 및 알고리즘적 문제 해결 역량에서 탁월한 성취를 보임.
+                </p>
+              </div>
+
+              <div class="se-teuk-card">
+                <div class="st-header">
+                  <span class="st-subject">인공지능 기초 / 융합과학 교과</span>
+                  <button class="btn-copy-st" data-target="st-text-2"><i data-lucide="copy"></i> 복사</button>
+                </div>
+                <p class="st-content" id="st-text-2">
+                  영상 미디어 산업에서 시청자 몰입도를 결정하는 요소에 관심을 가지고, 컴퓨터 비전 기술을 활용한 장면 전환 감지 및 사운드 덕킹 패턴 추출 시스템을 설계함. 인공지능이 영상의 편집 문법(컷 템포, 줌 배율, 트랜지션 유형)을 라벨링하고 이를 프리미어 프로 및 다빈치 리졸브의 실행 레시피로 자동 변환하는 사용자 중심 인터페이스를 구현함. 기술을 사용자 교육과 창의적 도구로 확장하려는 인간-컴퓨터 상호작용(HCI)적 사고방식이 돋보임.
+                </p>
+              </div>
+
+              <div class="se-teuk-card">
+                <div class="st-header">
+                  <span class="st-subject">미디어 커뮤니케이션 / 자율활동</span>
+                  <button class="btn-copy-st" data-target="st-text-3"><i data-lucide="copy"></i> 복사</button>
+                </div>
+                <p class="st-content" id="st-text-3">
+                  콘텐츠 창작 생태계에서 초급 편집자와 전문 영상 제작자 간의 기술 격차를 해소하기 위해 '역공학 편집 가이드 웹 솔루션'을 기획함. 인기 유튜브 영상의 바이럴 요인을 빅데이터 지표(첫 3초 훅 생존율, 컷 빈도)로 정량화하여 제시하고, 스피드 램핑의 수학적 베지에 곡선을 브라우저 상에서 시뮬레이션할 수 있는 교육용 샌드박스를 개발함으로써 미디어 리터러시와 공학적 도구 제작 능력을 입증함.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Document Footer -->
+          <div class="doc-footer">
+            <div class="doc-sign">
+              <span>작성자: 프로젝트 연구원</span>
+              <span>확인일자: 2026. 09. 23.</span>
+            </div>
+            <div class="doc-watermark">CineCraft AI Engineering Research Group</div>
+          </div>
+
+        </article>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Global Toast Notification -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+  </script>
+</body>
+</html>
